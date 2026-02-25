@@ -68,10 +68,19 @@ export function LoginPage() {
       <Navbar page="home" />
       <div className="relative flex min-h-[calc(100vh-62px)] items-center justify-center overflow-hidden px-4 py-10">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800;900&display=swap');
-        .font-display { font-family: 'Syne', sans-serif; }
-        .grad-bg { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
-      `}</style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800;900&display=swap');
+  .font-display { font-family: 'Syne', sans-serif; }
+  .grad-bg { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 9999px rgba(255, 255, 255, 0.03) inset !important;
+    -webkit-text-fill-color: #f1f5f9 !important;
+    caret-color: #f1f5f9;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+`}</style>
 
       <div className="pointer-events-none absolute -top-28 right-[-110px] h-[380px] w-[380px] rounded-full bg-indigo-600/20 blur-[90px]" />
       <div className="pointer-events-none absolute -bottom-24 left-[-120px] h-[340px] w-[340px] rounded-full bg-violet-600/15 blur-[85px]" />

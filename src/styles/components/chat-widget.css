@@ -1,0 +1,104 @@
+.kufu-chat-shell {
+  @apply flex h-full w-full flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl;
+}
+
+.kufu-chat-shell-floating {
+  @apply flex h-[560px] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl;
+}
+
+.kufu-chat-header {
+  @apply flex items-center justify-between border-b border-slate-700 bg-slate-800/50 p-4;
+}
+
+.kufu-chat-header-left {
+  @apply flex items-center gap-3;
+}
+
+.kufu-chat-bot-avatar {
+  @apply flex size-10 items-center justify-center rounded-full bg-black;
+}
+
+.kufu-chat-bot-avatar-image {
+  @apply h-6 w-6 object-contain;
+}
+
+.kufu-chat-menu-button {
+  @apply text-slate-400 hover:text-white;
+}
+
+.kufu-chat-menu-panel {
+  @apply absolute right-0 top-8 z-20 min-w-36 rounded-lg border border-slate-700 bg-slate-900 p-1 shadow-xl;
+}
+
+.kufu-chat-body {
+  @apply flex-1 space-y-6 overflow-y-auto p-4;
+}
+
+.kufu-chat-message-row {
+  @apply flex items-start gap-3;
+}
+
+.kufu-chat-message-row-user {
+  @apply flex-row-reverse;
+}
+
+.kufu-chat-message-avatar {
+  @apply flex size-8 shrink-0 items-center justify-center rounded-full;
+}
+
+.kufu-chat-message-avatar-user {
+  @apply bg-slate-700;
+}
+
+.kufu-chat-message-avatar-assistant {
+  @apply bg-black;
+}
+
+.kufu-chat-bubble {
+  @apply max-w-[80%] whitespace-pre-line rounded-xl p-3 text-sm leading-relaxed;
+}
+
+.kufu-chat-bubble-user {
+  @apply rounded-tr-none bg-primary text-white;
+}
+
+.kufu-chat-bubble-assistant {
+  @apply rounded-tl-none bg-slate-800 text-slate-100;
+}
+
+.kufu-chat-typing {
+  @apply flex items-center gap-1.5 pl-11;
+}
+
+.kufu-chat-footer {
+  @apply space-y-4 border-t border-slate-800 bg-slate-900 p-4;
+}
+
+.kufu-chat-quick-replies {
+  @apply no-scrollbar flex gap-2 overflow-x-auto pb-1;
+}
+
+.kufu-chat-quick-reply {
+  @apply whitespace-nowrap rounded-full border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-slate-700;
+}
+
+.kufu-chat-error {
+  @apply flex items-center justify-between gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-xs text-red-300;
+}
+
+.kufu-chat-error-retry {
+  @apply shrink-0 rounded-md bg-red-500/20 px-2 py-1 font-medium text-red-200 hover:bg-red-500/30;
+}
+
+.kufu-chat-form {
+  @apply flex items-center gap-2 rounded-xl bg-slate-800 p-2 pl-4;
+}
+
+.kufu-chat-input {
+  @apply flex-1 border-none bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:ring-0;
+}
+
+.kufu-chat-send {
+  @apply flex size-8 items-center justify-center rounded-lg bg-primary text-white;
+}
+

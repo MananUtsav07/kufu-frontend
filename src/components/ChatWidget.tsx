@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { brandChatLogoSrc } from '../lib/brand'
 import { useChat } from '../lib/chat-context'
+import '../styles/components/chat-widget.css'
 
 type ChatWidgetProps = {
   mode?: 'floating' | 'embedded'
@@ -11,8 +12,7 @@ type ChatWidgetProps = {
 }
 
 export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatWidgetProps) {
-  const { clearChat, error, isTyping, messages, quickReplies, retryLastResponse, sendMessage } =
-    useChat()
+  const { clearChat, error, isTyping, messages, quickReplies, retryLastResponse, sendMessage } = useChat()
 
   const [draft, setDraft] = useState('')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -51,10 +51,7 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
     setDraft('')
   }
 
-  const widgetClassName =
-    mode === 'embedded'
-      ? 'w-full h-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col'
-      : 'w-[min(380px,calc(100vw-2rem))] h-[560px] bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col'
+  const widgetClassName = mode === 'embedded' ? 'kufu-chat-shell' : 'kufu-chat-shell-floating'
 
   return (
     <motion.section
@@ -65,10 +62,10 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="flex items-center justify-between border-b border-slate-700 bg-slate-800/50 p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-full bg-black">
-            <img alt="Kufu logo" className="h-6 w-6 object-contain" src={brandChatLogoSrc} />
+      <div className="kufu-chat-header">
+        <div className="kufu-chat-header-left">
+          <div className="kufu-chat-bot-avatar">
+            <img alt="Kufu logo" className="kufu-chat-bot-avatar-image" src={brandChatLogoSrc} />
           </div>
           <div>
             <p className="text-sm font-bold text-white">Kufu Assistant</p>
@@ -80,7 +77,7 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
         </div>
         <div ref={menuRef} className="relative">
           <button
-            className="text-slate-400 hover:text-white"
+            className="kufu-chat-menu-button"
             aria-expanded={isMenuOpen}
             aria-haspopup="menu"
             aria-label="More actions"
@@ -93,7 +90,7 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
           <AnimatePresence>
             {isMenuOpen ? (
               <motion.div
-                className="absolute right-0 top-8 z-20 min-w-36 rounded-lg border border-slate-700 bg-slate-900 p-1 shadow-xl"
+                className="kufu-chat-menu-panel"
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
@@ -116,7 +113,7 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
         </div>
       </div>
 
-      <div className="flex-1 space-y-6 overflow-y-auto p-4">
+      <div className="kufu-chat-body">
         <AnimatePresence initial={false}>
           {messages.map((message) => {
             const isUser = message.role === 'user'
@@ -124,14 +121,14 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
             return (
               <motion.div
                 key={message.id}
-                className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`.trim()}
+                className={`kufu-chat-message-row ${isUser ? 'kufu-chat-message-row-user' : ''}`.trim()}
                 initial={{ opacity: 0, y: 10, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
               >
                 <div
-                  className={`flex size-8 shrink-0 items-center justify-center rounded-full ${
-                    isUser ? 'bg-slate-700' : 'bg-black'
+                  className={`kufu-chat-message-avatar ${
+                    isUser ? 'kufu-chat-message-avatar-user' : 'kufu-chat-message-avatar-assistant'
                   }`}
                 >
                   {isUser ? (
@@ -141,11 +138,7 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
                   )}
                 </div>
                 <div
-                  className={`max-w-[80%] whitespace-pre-line rounded-xl p-3 text-sm leading-relaxed ${
-                    isUser
-                      ? 'rounded-tr-none bg-primary text-white'
-                      : 'rounded-tl-none bg-slate-800 text-slate-100'
-                  }`}
+                  className={`kufu-chat-bubble ${isUser ? 'kufu-chat-bubble-user' : 'kufu-chat-bubble-assistant'}`}
                 >
                   {message.content}
                 </div>
@@ -157,7 +150,7 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
         <AnimatePresence>
           {isTyping ? (
             <motion.div
-              className="flex items-center gap-1.5 pl-11"
+              className="kufu-chat-typing"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 6 }}
@@ -173,12 +166,12 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
         <div ref={endRef} />
       </div>
 
-      <div className="space-y-4 border-t border-slate-800 bg-slate-900 p-4">
-        <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+      <div className="kufu-chat-footer">
+        <div className="kufu-chat-quick-replies">
           {quickReplies.map((reply) => (
             <button
               key={reply.label}
-              className="whitespace-nowrap rounded-full border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-slate-700"
+              className="kufu-chat-quick-reply"
               type="button"
               disabled={isTyping}
               onClick={() => sendMessage(reply.message)}
@@ -191,42 +184,33 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
         <AnimatePresence>
           {error ? (
             <motion.div
-              className="flex items-center justify-between gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-xs text-red-300"
+              className="kufu-chat-error"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 8 }}
               transition={{ duration: 0.18 }}
             >
               <span className="truncate">{error}</span>
-              <button
-                className="shrink-0 rounded-md bg-red-500/20 px-2 py-1 font-medium text-red-200 hover:bg-red-500/30"
-                type="button"
-                onClick={retryLastResponse}
-              >
+              <button className="kufu-chat-error-retry" type="button" onClick={retryLastResponse}>
                 Retry
               </button>
             </motion.div>
           ) : null}
         </AnimatePresence>
 
-        <form className="flex items-center gap-2 rounded-xl bg-slate-800 p-2 pl-4" onSubmit={handleSubmit}>
+        <form className="kufu-chat-form" onSubmit={handleSubmit}>
           <label className="sr-only" htmlFor={`chat-input-${mode}`}>
             Type a message
           </label>
           <input
             id={`chat-input-${mode}`}
-            className="flex-1 border-none bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:ring-0"
+            className="kufu-chat-input"
             placeholder="Type a message..."
             disabled={isTyping}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
           />
-          <button
-            className="flex size-8 items-center justify-center rounded-lg bg-primary text-white"
-            type="submit"
-            aria-label="Send message"
-            disabled={isTyping}
-          >
+          <button className="kufu-chat-send" type="submit" aria-label="Send message" disabled={isTyping}>
             <span className="material-symbols-outlined text-sm">send</span>
           </button>
         </form>
@@ -234,3 +218,4 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
     </motion.section>
   )
 }
+

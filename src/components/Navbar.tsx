@@ -5,6 +5,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { brandLogoSrc, brandName } from '../lib/brand'
 import { scrollToId } from '../lib/scrollToId'
+import { NavbarLinks } from './NavbarLinks'
+import '../styles/components/navbar.css'
 
 type NavbarProps = {
   page: 'home' | 'demo' | 'case-studies' | 'contact'
@@ -66,11 +68,7 @@ function AuthActions({ loginClassName, avatarClassName }: AuthActionsProps) {
 
   if (loading) {
     return (
-      <button
-        className={loginClassName}
-        disabled
-        type="button"
-      >
+      <button className={loginClassName} disabled type="button">
         Login
       </button>
     )
@@ -142,6 +140,8 @@ function AuthActions({ loginClassName, avatarClassName }: AuthActionsProps) {
 export function Navbar({ page }: NavbarProps) {
   const location = useLocation()
   const navigate = useNavigate()
+  const isMainNavigation = page === 'home' || page === 'demo' || page === 'case-studies' || page === 'contact'
+  const isDemoNavigation = page === 'demo'
 
   const handleSectionNavigation = (id: string) => {
     if (location.pathname === '/') {
@@ -152,131 +152,43 @@ export function Navbar({ page }: NavbarProps) {
     navigate('/', { state: { scrollTo: id } })
   }
 
-  if (page === 'home' || page === 'case-studies' || page === 'contact') {
+  if (isMainNavigation) {
     return (
       <motion.nav
         animate={{ opacity: 1, y: 0 }}
-        className="sticky top-0 z-50 w-full border-b border-slate-200 bg-background-light/80 px-6 backdrop-blur-md dark:border-slate-800 dark:bg-background-dark/80 lg:px-10"
+        className={isDemoNavigation ? 'kufu-navbar-shell-demo' : 'kufu-navbar-shell'}
         initial={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="relative flex h-16 items-center">
-          <div className="flex items-center gap-2">
-            <Link aria-label={`${brandName} Home`} className="flex items-center gap-2" to="/">
-              <img alt="Kufu logo" className="h-6 w-auto shrink-0 md:h-7" src={brandLogoSrc} />
-              <span className="text-2xl font-bold leading-tight tracking-tight text-slate-900 dark:text-slate-100">
-                {brandName}
-              </span>
+        <div className="kufu-navbar-row">
+          <div className="kufu-navbar-brand">
+            <Link aria-label={`${brandName} Home`} className="kufu-navbar-brand-link" to="/">
+              <img alt="Kufu logo" className="kufu-navbar-logo" src={brandLogoSrc} />
+              <span className="kufu-navbar-brand-text">{brandName}</span>
             </Link>
           </div>
 
-          <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex">
-            <button className={navButtonClass} type="button" onClick={() => handleSectionNavigation('home')}>
-              Home
-            </button>
-            <button className={navButtonClass} type="button" onClick={() => handleSectionNavigation('services')}>
-              Services
-            </button>
-            <button className={navButtonClass} type="button" onClick={() => handleSectionNavigation('pricing')}>
-              Pricing
-            </button>
-            <button className={navButtonClass} type="button" onClick={() => handleSectionNavigation('faq')}>
-              FAQ
-            </button>
-            <button className={navButtonClass} type="button" onClick={() => handleSectionNavigation('contact')}>
-              Contact
-            </button>
-            <button
-              className={navButtonClass}
-              type="button"
-              onClick={() => handleSectionNavigation('case-studies')}
-            >
-              Case Studies
-            </button>
-          </div>
+          <NavbarLinks
+            className="kufu-navbar-links"
+            buttonClassName={navButtonClass}
+            onNavigate={handleSectionNavigation}
+          />
 
-          <div className="ml-auto flex items-center gap-3">
-            <Link
-              className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background-dark"
-              to="/demo"
-            >
+          <div className="kufu-navbar-actions">
+            <Link className={isDemoNavigation ? 'kufu-navbar-cta-demo' : 'kufu-navbar-cta'} to="/demo">
               Request a Free Demo
             </Link>
             <div className="hidden md:block">
               <AuthActions
-                avatarClassName="flex size-10 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-white transition-colors hover:border-primary hover:text-primary dark:border-slate-600 dark:bg-slate-950"
-                loginClassName="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-bold text-slate-700 transition-all hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background-dark dark:border-slate-700 dark:text-slate-100"
+                avatarClassName={isDemoNavigation ? 'kufu-navbar-avatar-demo' : 'kufu-navbar-avatar'}
+                loginClassName={isDemoNavigation ? 'kufu-navbar-login-demo' : 'kufu-navbar-login'}
               />
             </div>
-          </div>
-        </div>
-      </motion.nav>
-    )
-  }
-
-  if (page === 'demo') {
-    return (
-      <motion.nav
-        animate={{ opacity: 1, y: 0 }}
-        className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/50 px-6 backdrop-blur-md dark:border-slate-800 dark:bg-background-dark/50 lg:px-10"
-        initial={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <div className="relative flex h-16 items-center">
-          <div className="flex items-center gap-2">
-            <Link aria-label={`${brandName} Home`} className="flex items-center gap-2" to="/">
-              <img alt="Kufu logo" className="h-6 w-auto shrink-0 md:h-7" src={brandLogoSrc} />
-              <span className="text-2xl font-bold leading-tight tracking-tight text-slate-900 dark:text-slate-100">
-                {brandName}
-              </span>
-            </Link>
-          </div>
-
-          <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex">
-            <button className={navButtonClass} type="button" onClick={() => handleSectionNavigation('home')}>
-              Home
-            </button>
-            <button className={navButtonClass} type="button" onClick={() => handleSectionNavigation('services')}>
-              Services
-            </button>
-            <button className={navButtonClass} type="button" onClick={() => handleSectionNavigation('pricing')}>
-              Pricing
-            </button>
-            <button className={navButtonClass} type="button" onClick={() => handleSectionNavigation('faq')}>
-              FAQ
-            </button>
-            <button className={navButtonClass} type="button" onClick={() => handleSectionNavigation('contact')}>
-              Contact
-            </button>
-            <button
-              className={navButtonClass}
-              type="button"
-              onClick={() => handleSectionNavigation('case-studies')}
-            >
-              Case Studies
-            </button>
-          </div>
-
-          <div className="ml-auto flex items-center gap-3">
-            <Link
-              className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background-dark"
-              to="/demo"
-            >
-              Request a Free Demo
-            </Link>
-            <div className="hidden md:block">
-              <AuthActions
-                avatarClassName="flex size-9 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-white transition-colors hover:border-primary hover:text-primary dark:border-slate-600 dark:bg-slate-950"
-                loginClassName="rounded-lg border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition-all hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background-dark dark:border-slate-700 dark:text-slate-100"
-              />
-            </div>
-            <button
-              aria-label="Open menu"
-              className="p-2 text-slate-600 dark:text-slate-400 md:hidden"
-              type="button"
-            >
-              <span className="material-symbols-outlined">menu</span>
-            </button>
+            {isDemoNavigation ? (
+              <button aria-label="Open menu" className="kufu-navbar-mobile-menu" type="button">
+                <span className="material-symbols-outlined">menu</span>
+              </button>
+            ) : null}
           </div>
         </div>
       </motion.nav>
@@ -286,22 +198,20 @@ export function Navbar({ page }: NavbarProps) {
   return (
     <motion.header
       animate={{ opacity: 1, y: 0 }}
-      className="sticky top-0 z-50 w-full border-b border-slate-200 bg-background-light/80 px-6 backdrop-blur-md dark:border-slate-800 dark:bg-background-dark/80 lg:px-10"
+      className="kufu-navbar-shell"
       initial={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="relative flex h-16 items-center">
-        <div className="flex items-center gap-2">
-          <Link aria-label={`${brandName} Home`} className="flex items-center gap-2" to="/">
-            <img alt="Kufu logo" className="h-6 w-auto shrink-0 md:h-7" src={brandLogoSrc} />
-            <span className="text-2xl font-bold leading-tight tracking-tight text-slate-900 dark:text-slate-100">
-              {brandName}
-            </span>
+      <div className="kufu-navbar-row">
+        <div className="kufu-navbar-brand">
+          <Link aria-label={`${brandName} Home`} className="kufu-navbar-brand-link" to="/">
+            <img alt="Kufu logo" className="kufu-navbar-logo" src={brandLogoSrc} />
+            <span className="kufu-navbar-brand-text">{brandName}</span>
           </Link>
         </div>
 
-        <div className="ml-auto flex items-center gap-3">
-          <button aria-label="Open menu" className="text-slate-600 dark:text-slate-400" type="button">
+        <div className="kufu-navbar-actions">
+          <button aria-label="Open menu" className="kufu-navbar-mobile-menu-icon" type="button">
             <span className="material-symbols-outlined">menu</span>
           </button>
         </div>
@@ -309,3 +219,4 @@ export function Navbar({ page }: NavbarProps) {
     </motion.header>
   )
 }
+

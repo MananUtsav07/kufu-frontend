@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, ReactNode, RefObject } from "react";
+import { useState, useEffect, useRef, type ReactNode, type RefObject } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 
@@ -89,7 +89,7 @@ function BotIcon({ size = 18 }: BotIconProps) {
   );
 }
 
-function useScrollReveal(): [RefObject<HTMLDivElement>, boolean] {
+function useScrollReveal(): [RefObject<HTMLDivElement | null>, boolean] {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState<boolean>(false);
   useEffect(() => {

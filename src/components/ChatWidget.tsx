@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 
-import { brandChatLogoSrc } from '../lib/brand'
+import { BrandBotIcon } from './BrandBotIcon'
 import { useChat } from '../lib/chat-context'
 
 type ChatWidgetProps = {
@@ -52,8 +52,8 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
 
   const widgetClassName =
     mode === 'embedded'
-      ? 'flex h-full w-full flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl'
-      : 'flex h-[560px] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl'
+      ? 'flex h-full w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 shadow-2xl'
+      : 'flex h-[560px] w-[min(390px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-indigo-500/20 bg-slate-900/95 shadow-[0_24px_64px_rgba(0,0,0,0.55)]'
 
   return (
     <motion.section
@@ -64,10 +64,10 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="flex items-center justify-between border-b border-slate-700 bg-slate-800/50 p-4">
+      <div className="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-indigo-500/20 via-violet-500/20 to-transparent p-4">
         <div className="flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-full bg-black">
-            <img alt="Kufu logo" className="h-6 w-6 object-contain" src={brandChatLogoSrc} />
+            <BrandBotIcon size={16} />
           </div>
           <div>
             <p className="text-sm font-bold text-white">Kufu Assistant</p>
@@ -136,12 +136,14 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
                   {isUser ? (
                     <span className="material-symbols-outlined text-sm text-slate-300">person</span>
                   ) : (
-                    <img alt="Kufu logo" className="h-4 w-4 object-contain" src={brandChatLogoSrc} />
+                    <BrandBotIcon size={13} />
                   )}
                 </div>
                 <div
                   className={`max-w-[80%] whitespace-pre-line rounded-xl p-3 text-sm leading-relaxed ${
-                    isUser ? 'rounded-tr-none bg-primary text-white' : 'rounded-tl-none bg-slate-800 text-slate-100'
+                    isUser
+                      ? 'rounded-tr-none bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-[0_8px_20px_rgba(99,102,241,0.25)]'
+                      : 'rounded-tl-none border border-white/10 bg-slate-800/90 text-slate-100'
                   }`}
                 >
                   {message.content}
@@ -170,12 +172,12 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
         <div ref={endRef} />
       </div>
 
-      <div className="space-y-4 border-t border-slate-800 bg-slate-900 p-4">
+      <div className="space-y-4 border-t border-white/10 bg-slate-900 p-4">
         <div className="flex gap-2 overflow-x-auto pb-1">
           {quickReplies.map((reply) => (
             <button
               key={reply.label}
-              className="whitespace-nowrap rounded-full border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-slate-700"
+              className="whitespace-nowrap rounded-full border border-indigo-500/25 bg-indigo-500/10 px-3 py-1.5 text-xs font-medium text-indigo-200 transition-colors hover:bg-indigo-500/20"
               type="button"
               disabled={isTyping}
               onClick={() => sendMessage(reply.message)}
@@ -206,7 +208,7 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
           ) : null}
         </AnimatePresence>
 
-        <form className="flex items-center gap-2 rounded-xl bg-slate-800 p-2 pl-4" onSubmit={handleSubmit}>
+        <form className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-2 pl-4" onSubmit={handleSubmit}>
           <label className="sr-only" htmlFor={`chat-input-${mode}`}>
             Type a message
           </label>
@@ -219,7 +221,7 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
             onChange={(event) => setDraft(event.target.value)}
           />
           <button
-            className="flex size-8 items-center justify-center rounded-lg bg-primary text-white"
+            className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-white"
             type="submit"
             aria-label="Send message"
             disabled={isTyping}

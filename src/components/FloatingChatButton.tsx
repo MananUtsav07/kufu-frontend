@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { BrandBotIcon } from './BrandBotIcon'
 
 type FloatingChatButtonProps = {
   isOpen: boolean
@@ -8,7 +9,8 @@ type FloatingChatButtonProps = {
 export function FloatingChatButton({ isOpen, onToggle }: FloatingChatButtonProps) {
   return (
     <motion.button
-      className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-xl transition-transform hover:scale-110 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background-dark"
+      className="group relative flex h-14 w-14 items-center justify-center rounded-full text-white shadow-[0_14px_34px_rgba(99,102,241,0.5)] transition-transform hover:scale-110 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+      style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
       type="button"
       aria-controls="floating-chat-widget"
       aria-expanded={isOpen}
@@ -18,13 +20,26 @@ export function FloatingChatButton({ isOpen, onToggle }: FloatingChatButtonProps
       whileTap={{ scale: 0.95 }}
       transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
     >
-      <span className="material-symbols-outlined text-2xl">{isOpen ? 'close' : 'chat_bubble'}</span>
       {!isOpen ? (
-        <span className="absolute -right-1 -top-1 flex h-4 w-4" aria-hidden>
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
-          <span className="relative inline-flex h-4 w-4 rounded-full bg-blue-500" />
-        </span>
+        <>
+          <span
+            className="pointer-events-none absolute inset-[-8px] rounded-full bg-gradient-to-br from-indigo-500/35 to-violet-500/35 blur-md"
+            aria-hidden
+          />
+          <span
+            className="pointer-events-none absolute inset-[-6px] rounded-full border border-indigo-300/35 animate-pulse"
+            aria-hidden
+          />
+        </>
       ) : null}
+
+      {isOpen ? (
+        <span className="material-symbols-outlined relative z-10 text-2xl">close</span>
+      ) : (
+        <span className="relative z-10">
+          <BrandBotIcon size={20} />
+        </span>
+      )}
     </motion.button>
   )
 }

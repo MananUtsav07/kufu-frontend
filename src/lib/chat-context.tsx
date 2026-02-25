@@ -132,6 +132,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const nextErrorMessage =
         devDetails
           ? devDetails
+          : streamError instanceof ApiError && (streamError.status === 0 || streamError.status === 404)
+          ? 'Chat backend is unreachable. Start kufu-backend on port 8787 or set VITE_API_BASE_URL.'
           : streamError instanceof ApiError && streamError.status === 429
           ? 'Rate limit reached. Please wait a few minutes and try again.'
           : streamError instanceof Error

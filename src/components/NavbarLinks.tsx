@@ -2,6 +2,7 @@ type NavbarLinksProps = {
   className?: string
   buttonClassName: string
   onNavigate: (id: string) => void
+  onCaseStudiesNavigate: () => void
 }
 
 const HOME_NAV_LINKS = [
@@ -13,15 +14,26 @@ const HOME_NAV_LINKS = [
   { id: 'case-studies', label: 'Case Studies' },
 ] as const
 
-export function NavbarLinks({ className, buttonClassName, onNavigate }: NavbarLinksProps) {
+export function NavbarLinks({
+  className,
+  buttonClassName,
+  onNavigate,
+  onCaseStudiesNavigate,
+}: NavbarLinksProps) {
   return (
     <div className={className}>
       {HOME_NAV_LINKS.map((item) => (
-        <button key={item.id} className={buttonClassName} type="button" onClick={() => onNavigate(item.id)}>
+        <button
+          key={item.id}
+          className={buttonClassName}
+          type="button"
+          onClick={() =>
+            item.id === 'case-studies' ? onCaseStudiesNavigate() : onNavigate(item.id)
+          }
+        >
           {item.label}
         </button>
       ))}
     </div>
   )
 }
-

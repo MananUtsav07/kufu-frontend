@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../auth/AuthProvider'
+import { getReadableAuthError } from '../lib/authError'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -60,7 +61,7 @@ export function CreateAccountPage() {
 
       navigate('/', { replace: true })
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to create account.')
+      setErrorMessage(getReadableAuthError(error, 'Unable to create account.'))
     } finally {
       setIsSubmitting(false)
     }

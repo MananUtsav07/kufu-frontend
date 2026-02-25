@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../auth/AuthProvider'
+import { getReadableAuthError } from '../lib/authError'
 import { supabase } from '../lib/supabaseClient'
 
 export function LoginPage() {
@@ -26,7 +27,7 @@ export function LoginPage() {
       await signIn(email.trim(), password)
       navigate('/', { replace: true })
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to sign in.')
+      setErrorMessage(getReadableAuthError(error, 'Unable to sign in.'))
     } finally {
       setIsSubmitting(false)
     }
@@ -54,7 +55,7 @@ export function LoginPage() {
 
       setSuccessMessage('Password reset email sent. Check your inbox.')
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to send reset email.')
+      setErrorMessage(getReadableAuthError(error, 'Unable to send reset email.'))
     } finally {
       setIsSendingReset(false)
     }

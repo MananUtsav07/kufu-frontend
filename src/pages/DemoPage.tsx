@@ -209,21 +209,6 @@ export function DemoPage() {
         <motion.section className="lg:sticky lg:top-24" variants={fadeInUp}>
           <div className="mx-auto w-full max-w-[450px]">
             <ChatWidget mode="embedded" className="h-[600px]" />
-
-            <div className="mt-6 flex items-center justify-center gap-6 opacity-60 grayscale transition-all hover:grayscale-0">
-              <div className="flex items-center gap-1.5 text-lg font-bold">
-                <span className="material-symbols-outlined text-primary">token</span>
-                NEXUS
-              </div>
-              <div className="flex items-center gap-1.5 text-lg font-bold">
-                <span className="material-symbols-outlined text-primary">adjust</span>
-                ORBIT
-              </div>
-              <div className="flex items-center gap-1.5 text-lg font-bold">
-                <span className="material-symbols-outlined text-primary">stream</span>
-                FLUX
-              </div>
-            </div>
           </div>
         </motion.section>
       </motion.main>

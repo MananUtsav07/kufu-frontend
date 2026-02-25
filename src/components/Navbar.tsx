@@ -152,6 +152,15 @@ export function Navbar({ page }: NavbarProps) {
     navigate('/', { state: { scrollTo: id } })
   }
 
+  const handleCaseStudiesNavigation = () => {
+    if (location.pathname === '/case-studies') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    navigate('/case-studies')
+  }
+
   if (isMainNavigation) {
     return (
       <motion.nav
@@ -171,6 +180,7 @@ export function Navbar({ page }: NavbarProps) {
           <NavbarLinks
             className="kufu-navbar-links"
             buttonClassName={navButtonClass}
+            onCaseStudiesNavigate={handleCaseStudiesNavigation}
             onNavigate={handleSectionNavigation}
           />
 
@@ -219,4 +229,3 @@ export function Navbar({ page }: NavbarProps) {
     </motion.header>
   )
 }
-

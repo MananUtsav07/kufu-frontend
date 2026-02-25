@@ -2,6 +2,8 @@ import { type FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../auth/AuthProvider'
+import { BrandBotIcon } from '../components/BrandBotIcon'
+import { Navbar } from '../components/Navbar'
 import { getReadableAuthError } from '../lib/authError'
 
 export function LoginPage() {
@@ -47,28 +49,50 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background-light p-4 font-display text-slate-900 dark:bg-background-dark dark:text-slate-100">
-      <div className="w-full max-w-[480px] space-y-8 rounded-xl border border-slate-200 bg-slate-50/50 p-8 shadow-2xl backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/40">
-        <div className="flex flex-col items-center">
-          <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-primary shadow-[0_0_20px_rgba(19,37,236,0.3)]">
-            <span className="material-symbols-outlined text-3xl text-white">auto_awesome</span>
+    <div className="min-h-screen bg-[#020617] text-slate-300">
+      <Navbar page="home" />
+      <div className="relative flex min-h-[calc(100vh-62px)] items-center justify-center overflow-hidden px-4 py-10">
+      <style>{`
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800;900&display=swap');
+  .font-display { font-family: 'Syne', sans-serif; }
+  .grad-bg { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 9999px rgba(255, 255, 255, 0.03) inset !important;
+    -webkit-text-fill-color: #f1f5f9 !important;
+    caret-color: #f1f5f9;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+`}</style>
+
+      <div className="pointer-events-none absolute -top-28 right-[-110px] h-[380px] w-[380px] rounded-full bg-indigo-600/20 blur-[90px]" />
+      <div className="pointer-events-none absolute -bottom-24 left-[-120px] h-[340px] w-[340px] rounded-full bg-violet-600/15 blur-[85px]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.04)_1px,transparent_1px)] bg-[size:40px_40px]" />
+
+      <div className="relative w-full max-w-[460px] rounded-3xl border border-white/[0.08] bg-slate-900/75 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:p-8">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl grad-bg shadow-[0_0_0_3px_rgba(99,102,241,0.2)]">
+            <BrandBotIcon size={20} />
           </div>
-          <h2 className="text-center text-3xl font-bold leading-tight tracking-tight text-slate-900 dark:text-white">
+          <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-white">
             Kufu
           </h2>
-          <p className="mt-2 text-center text-base font-normal text-slate-600 dark:text-slate-400">
+          <p className="mt-2 text-base text-slate-400">
             Log in to your account
           </p>
         </div>
 
-        <form className="space-y-6" onSubmit={handleSubmit}>
+        <form autoComplete="off" className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              <span className="mb-1.5 block text-sm font-medium text-slate-300">
                 Email Address
               </span>
               <input
-                className="form-input h-12 w-full rounded-lg border-slate-300 bg-white px-4 text-base text-slate-900 transition-all placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
+                autoComplete="off"
+                className="h-12 w-full rounded-xl border border-white/[0.1] bg-white/[0.03] px-4 text-base text-slate-100 transition-all placeholder:text-slate-500 focus:border-indigo-500/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                 placeholder="name@company.com"
                 required
                 type="email"
@@ -79,11 +103,11 @@ export function LoginPage() {
 
             <label className="block">
               <div className="mb-1.5 flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                <span className="text-sm font-medium text-slate-300">
                   Password
                 </span>
                 <button
-                  className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+                  className="text-sm font-medium text-indigo-300 transition-colors hover:text-indigo-200"
                   disabled={isSendingReset}
                   type="button"
                   onClick={handleForgotPassword}
@@ -93,7 +117,8 @@ export function LoginPage() {
               </div>
               <div className="relative">
                 <input
-                  className="form-input h-12 w-full rounded-lg border-slate-300 bg-white pl-4 pr-12 text-base text-slate-900 transition-all placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
+                  autoComplete="off"
+                  className="h-12 w-full rounded-xl border border-white/[0.1] bg-white/[0.03] pl-4 pr-12 text-base text-slate-100 transition-all placeholder:text-slate-500 focus:border-indigo-500/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                   placeholder="********"
                   required
                   type={showPassword ? 'text' : 'password'}
@@ -102,7 +127,7 @@ export function LoginPage() {
                 />
                 <button
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
                 >
@@ -115,7 +140,7 @@ export function LoginPage() {
           </div>
 
           <button
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary font-semibold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl grad-bg font-semibold text-white shadow-[0_8px_24px_rgba(99,102,241,0.35)] transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(99,102,241,0.4)] disabled:cursor-not-allowed disabled:opacity-70"
             disabled={isSubmitting}
             type="submit"
           >
@@ -124,24 +149,24 @@ export function LoginPage() {
           </button>
 
           {errorMessage ? (
-            <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
               {errorMessage}
             </div>
           ) : null}
 
           {successMessage ? (
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-400">
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-300">
               {successMessage}
             </div>
           ) : null}
         </form>
 
-        <div className="relative">
+        <div className="relative mb-4 mt-7">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-300 dark:border-slate-700" />
+            <div className="w-full border-t border-white/[0.1]" />
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background-light px-3 font-medium text-slate-500 dark:bg-[#15172a]">
+          <div className="relative flex justify-center">
+            <span className="rounded-full border border-white/[0.08] bg-slate-900/95 px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
               Or continue with
             </span>
           </div>
@@ -149,7 +174,7 @@ export function LoginPage() {
 
         <div className="grid grid-cols-1 gap-4">
           <button
-            className="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-white/[0.1] bg-white/[0.03] px-4 text-slate-300 transition-colors hover:bg-white/[0.06] disabled:opacity-80"
             disabled
             type="button"
           >
@@ -175,24 +200,25 @@ export function LoginPage() {
           </button>
         </div>
 
-        <p className="text-center text-sm text-slate-600 dark:text-slate-400">
+        <p className="mt-5 text-center text-sm text-slate-400">
           Don&apos;t have an account?
-          <Link className="ml-1 font-semibold text-primary transition-colors hover:text-primary/80" to="/create-account">
+          <Link className="ml-1 font-semibold text-indigo-300 transition-colors hover:text-indigo-200" to="/create-account">
             Create an account
           </Link>
         </p>
       </div>
 
-      <div className="mt-8 flex gap-6 text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-500">
-        <a className="transition-colors hover:text-primary" href="#">
+      <div className="absolute bottom-5 hidden gap-6 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 sm:flex">
+        <a className="transition-colors hover:text-indigo-300" href="#">
           Privacy Policy
         </a>
-        <a className="transition-colors hover:text-primary" href="#">
+        <a className="transition-colors hover:text-indigo-300" href="#">
           Terms of Service
         </a>
-        <a className="transition-colors hover:text-primary" href="#">
+        <a className="transition-colors hover:text-indigo-300" href="#">
           Support
         </a>
+      </div>
       </div>
     </div>
   )

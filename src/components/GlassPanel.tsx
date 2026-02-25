@@ -9,9 +9,10 @@ type GlassPanelProps<T extends ElementType> = {
 export function GlassPanel<T extends ElementType = 'div'>(props: GlassPanelProps<T>) {
   const { as, className = '', children, ...rest } = props
   const Component = as ?? 'div'
+  const panelClassName = 'border border-white/5 bg-white/[0.03] backdrop-blur-[10px]'
 
   return (
-    <Component className={`glass-panel ${className}`.trim()} {...rest}>
+    <Component className={`${panelClassName} ${className}`.trim()} {...rest}>
       {children}
     </Component>
   )

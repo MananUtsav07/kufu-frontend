@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoLead AI - AI-Powered Lead Generation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1325ec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101222",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-size: 24px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header / Navbar -->
+<nav class="border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-background-dark/50 backdrop-blur-md sticky top-0 z-50">
+<div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="bg-primary p-1.5 rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">robot_2</span>
+</div>
+<span class="text-xl font-bold tracking-tight">AutoLead AI</span>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Platform</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Solutions</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Pricing</a>
+<button class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all">
+                    Get Started
+                </button>
+</div>
+<button class="md:hidden p-2 text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</nav>
+<main class="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+<!-- Left Section: Lead Capture Form -->
+<section class="space-y-8">
+<div class="space-y-4">
+<h1 class="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
+                    Scale your sales with <span class="text-primary">AI Automation.</span>
+</h1>
+<p class="text-lg text-slate-600 dark:text-slate-400 max-w-lg">
+                    Stop chasing leads manually. Our AI identifies, engages, and qualifies high-intent prospects 24/7.
+                </p>
+</div>
+<div class="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-6 md:p-8 rounded-xl shadow-xl">
+<form class="space-y-4" onsubmit="return false;">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Full Name</label>
+<input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary text-slate-900 dark:text-slate-100 placeholder:text-slate-500" placeholder="John Doe" type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Business Type</label>
+<select class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary text-slate-900 dark:text-slate-100">
+<option>SaaS / Tech</option>
+<option>Real Estate</option>
+<option>E-commerce</option>
+<option>Service Provider</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Phone</label>
+<input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary text-slate-900 dark:text-slate-100" placeholder="+1 (555) 000-0000" type="tel"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Email Address</label>
+<input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary text-slate-900 dark:text-slate-100" placeholder="john@company.com" type="email"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-semibold uppercase tracking-wider text-slate-500">How can we help?</label>
+<textarea class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary text-slate-900 dark:text-slate-100" placeholder="Tell us about your lead gen goals..." rows="3"></textarea>
+</div>
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-lg transition-all flex items-center justify-center gap-2 group" type="submit">
+                        Start Free Trial
+                        <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+<!-- Success State Simulation (Hidden by default, context provided) -->
+<div class="mt-4 flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-500">
+<span class="material-symbols-outlined">check_circle</span>
+<p class="text-sm font-medium">Form submitted successfully! Check your email for a demo link.</p>
+</div>
+</form>
+</div>
+</section>
+<!-- Right Section: Chatbot Demo Panel -->
+<section class="lg:sticky lg:top-24">
+<div class="w-full max-w-[450px] mx-auto bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[600px]">
+<!-- Chat Header -->
+<div class="p-4 bg-slate-800/50 flex items-center justify-between border-b border-slate-700">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-xl">smart_toy</span>
+</div>
+<div>
+<p class="text-sm font-bold">AutoLead Assistant</p>
+<div class="flex items-center gap-1.5">
+<span class="size-2 bg-emerald-500 rounded-full"></span>
+<span class="text-[10px] text-slate-400 font-medium uppercase tracking-tight">AI Active</span>
+</div>
+</div>
+</div>
+<button class="text-slate-400 hover:text-white">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+<!-- Chat Body -->
+<div class="flex-1 overflow-y-auto p-4 space-y-6">
+<!-- AI Message -->
+<div class="flex items-start gap-3">
+<div class="size-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-sm">robot_2</span>
+</div>
+<div class="bg-slate-800 p-3 rounded-xl rounded-tl-none text-sm max-w-[80%] leading-relaxed">
+                            Hello! I noticed you're exploring lead generation solutions. Would you like to see how we helped a SaaS company grow 300% last quarter?
+                        </div>
+</div>
+<!-- User Message -->
+<div class="flex items-start gap-3 flex-row-reverse">
+<div class="size-8 rounded-full bg-slate-700 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-slate-300 text-sm">person</span>
+</div>
+<div class="bg-primary p-3 rounded-xl rounded-tr-none text-sm max-w-[80%] leading-relaxed text-white">
+                            Yes, I'd love to see that case study. How does the integration work?
+                        </div>
+</div>
+<!-- AI Message with Image/Card -->
+<div class="flex items-start gap-3">
+<div class="size-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-sm">robot_2</span>
+</div>
+<div class="space-y-3 max-w-[80%]">
+<div class="bg-slate-800 p-3 rounded-xl rounded-tl-none text-sm leading-relaxed">
+                                Great! We integrate directly with your CRM. Here is a quick snapshot of the dashboard analytics:
+                            </div>
+<div class="rounded-lg overflow-hidden border border-slate-700">
+<div class="bg-slate-700/50 aspect-video flex items-center justify-center">
+<div class="text-center p-4">
+<div class="w-full h-24 bg-gradient-to-r from-primary/30 to-purple-500/30 rounded flex items-end gap-1 p-2">
+<div class="flex-1 bg-primary h-[40%] rounded-t"></div>
+<div class="flex-1 bg-primary h-[60%] rounded-t"></div>
+<div class="flex-1 bg-primary h-[90%] rounded-t"></div>
+<div class="flex-1 bg-primary h-[75%] rounded-t"></div>
+<div class="flex-1 bg-primary h-[100%] rounded-t"></div>
+</div>
+<p class="text-[10px] text-slate-400 mt-2">Live Lead Conversion Metrics</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- AI Typing (Indication) -->
+<div class="flex items-center gap-1.5 pl-11">
+<div class="size-1 bg-slate-500 rounded-full animate-pulse"></div>
+<div class="size-1 bg-slate-500 rounded-full animate-pulse delay-75"></div>
+<div class="size-1 bg-slate-500 rounded-full animate-pulse delay-150"></div>
+</div>
+</div>
+<!-- Chat Footer: Quick Replies and Input -->
+<div class="p-4 bg-slate-900 border-t border-slate-800 space-y-4">
+<div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+<button class="whitespace-nowrap bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-full text-xs font-medium transition-colors">
+                            Integration Guide
+                        </button>
+<button class="whitespace-nowrap bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-full text-xs font-medium transition-colors">
+                            View Pricing
+                        </button>
+<button class="whitespace-nowrap bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-full text-xs font-medium transition-colors">
+                            Talk to Human
+                        </button>
+</div>
+<div class="flex items-center gap-2 bg-slate-800 rounded-xl p-2 pl-4">
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-sm placeholder:text-slate-500" placeholder="Type a message..." type="text"/>
+<button class="bg-primary size-8 rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Trust Badge -->
+<div class="mt-6 flex items-center justify-center gap-6 opacity-60 grayscale hover:grayscale-0 transition-all">
+<div class="flex items-center gap-1.5 font-bold text-lg">
+<span class="material-symbols-outlined text-primary">token</span>
+                    NEXUS
+                </div>
+<div class="flex items-center gap-1.5 font-bold text-lg">
+<span class="material-symbols-outlined text-primary">adjust</span>
+                    ORBIT
+                </div>
+<div class="flex items-center gap-1.5 font-bold text-lg">
+<span class="material-symbols-outlined text-primary">stream</span>
+                    FLUX
+                </div>
+</div>
+</section>
+</main>
+<!-- Bottom Nav (Mobile Only) -->
+<div class="md:hidden sticky bottom-0 z-50 flex gap-2 border-t border-slate-800 bg-slate-900/90 backdrop-blur-lg px-4 pb-4 pt-3">
+<a class="flex flex-1 flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium leading-normal">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">group</span>
+<p class="text-[10px] font-medium leading-normal">Leads</p>
+</a>
+<a class="flex flex-1 flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<p class="text-[10px] font-medium leading-normal">Reports</p>
+</a>
+<a class="flex flex-1 flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-[10px] font-medium leading-normal">Settings</p>
+</a>
+</div>
+<!-- Footer Content -->
+<footer class="mt-auto py-8 border-t border-slate-200 dark:border-slate-800 text-center">
+<p class="text-xs text-slate-500">© 2024 AutoLead AI. Powered by advanced machine learning models.</p>
+</footer>
+</body></html>

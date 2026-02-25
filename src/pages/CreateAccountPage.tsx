@@ -8,7 +8,7 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function CreateAccountPage() {
   const navigate = useNavigate()
-  const { signUp } = useAuth()
+  const { register } = useAuth()
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -17,6 +17,7 @@ export function CreateAccountPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isResending, setIsResending] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
@@ -50,12 +51,10 @@ export function CreateAccountPage() {
     setIsSubmitting(true)
 
     try {
-      const result = await signUp(trimmedEmail, password, name.trim() || undefined)
+      const result = await register(trimmedEmail, password, name.trim() || undefined)
 
       if (result.requiresEmailConfirmation) {
         setSuccessMessage('Check your email to confirm your account.')
-        setPassword('')
-        setConfirmPassword('')
         return
       }
 
@@ -64,6 +63,32 @@ export function CreateAccountPage() {
       setErrorMessage(getReadableAuthError(error, 'Unable to create account.'))
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleResendVerification = async () => {
+    setErrorMessage(null)
+    setSuccessMessage(null)
+
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail || !emailPattern.test(trimmedEmail)) {
+      setErrorMessage('Enter a valid email address first.')
+      return
+    }
+
+    if (password.length < 8) {
+      setErrorMessage('Enter your password again to resend verification.')
+      return
+    }
+
+    setIsResending(true)
+    try {
+      await register(trimmedEmail, password, name.trim() || undefined)
+      setSuccessMessage('Verification email sent again. Please check your inbox.')
+    } catch (error) {
+      setErrorMessage(getReadableAuthError(error, 'Unable to resend verification email.'))
+    } finally {
+      setIsResending(false)
     }
   }
 
@@ -211,7 +236,15 @@ export function CreateAccountPage() {
 
           {successMessage ? (
             <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-400">
-              {successMessage}
+              <div>{successMessage}</div>
+              <button
+                type="button"
+                className="mt-2 text-xs font-semibold text-emerald-300 underline underline-offset-2 disabled:opacity-70"
+                onClick={handleResendVerification}
+                disabled={isResending}
+              >
+                {isResending ? 'Resending...' : 'Resend verification email'}
+              </button>
             </div>
           ) : null}
         </form>

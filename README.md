@@ -15,8 +15,6 @@ Vite + React + TypeScript frontend for the Kufu website.
 Create `.env.local`:
 
 - `VITE_API_BASE_URL=` (leave empty in local dev, set to backend URL in production)
-- `VITE_SUPABASE_URL=`
-- `VITE_SUPABASE_ANON_KEY=`
 
 ## Vercel (Frontend Project)
 
@@ -27,5 +25,3 @@ Create `.env.local`:
 Set Vercel env vars:
 
 - `VITE_API_BASE_URL=https://<your-backend-vercel-domain>`
-- `VITE_SUPABASE_URL=...`
-- `VITE_SUPABASE_ANON_KEY=...`

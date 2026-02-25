@@ -3,11 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../auth/AuthProvider'
 import { getReadableAuthError } from '../lib/authError'
-import { supabase } from '../lib/supabaseClient'
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { signIn } = useAuth()
+  const { login } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -24,7 +23,7 @@ export function LoginPage() {
     setIsSubmitting(true)
 
     try {
-      await signIn(email.trim(), password)
+      await login(email.trim(), password)
       navigate('/', { replace: true })
     } catch (error) {
       setErrorMessage(getReadableAuthError(error, 'Unable to sign in.'))
@@ -43,22 +42,8 @@ export function LoginPage() {
     }
 
     setIsSendingReset(true)
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/login`,
-      })
-
-      if (error) {
-        throw error
-      }
-
-      setSuccessMessage('Password reset email sent. Check your inbox.')
-    } catch (error) {
-      setErrorMessage(getReadableAuthError(error, 'Unable to send reset email.'))
-    } finally {
-      setIsSendingReset(false)
-    }
+    setSuccessMessage('Password reset flow is not enabled yet. Please contact support.')
+    setIsSendingReset(false)
   }
 
   return (

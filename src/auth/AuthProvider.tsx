@@ -1,109 +1,105 @@
-import type { Session, User } from '@supabase/supabase-js'
 import {
   createContext,
   type PropsWithChildren,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from 'react'
 
-import { supabase } from '../lib/supabaseClient'
+import { ApiError, getMe, postLogin, postLogout, postRegister, type AuthUser } from '../lib/api'
+
+type RegisterResult = {
+  requiresEmailConfirmation: boolean
+}
 
 type AuthContextValue = {
-  session: Session | null
-  user: User | null
+  user: AuthUser | null
   loading: boolean
+  login: (email: string, password: string) => Promise<void>
+  register: (email: string, password: string, name?: string) => Promise<RegisterResult>
+  logout: () => Promise<void>
+  refreshMe: () => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (
-    email: string,
-    password: string,
-    name?: string,
-  ) => Promise<{ requiresEmailConfirmation: boolean }>
+  signUp: (email: string, password: string, name?: string) => Promise<RegisterResult>
   signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [session, setSession] = useState<Session | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
+
+  const refreshMe = useCallback(async () => {
+    try {
+      const response = await getMe()
+      setUser(response.user)
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        setUser(null)
+        return
+      }
+
+      throw error
+    }
+  }, [])
 
   useEffect(() => {
     let isMounted = true
 
-    void supabase.auth
-      .getSession()
-      .then(({ data }) => {
-        if (!isMounted) {
-          return
+    void (async () => {
+      try {
+        await refreshMe()
+      } catch (error) {
+        console.error('[auth] failed to load current user', error)
+        if (isMounted) {
+          setUser(null)
         }
-
-        setSession(data.session ?? null)
-        setLoading(false)
-      })
-      .catch(() => {
-        if (!isMounted) {
-          return
+      } finally {
+        if (isMounted) {
+          setLoading(false)
         }
-
-        setSession(null)
-        setLoading(false)
-      })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession)
-      setLoading(false)
-    })
+      }
+    })()
 
     return () => {
       isMounted = false
-      subscription.unsubscribe()
+    }
+  }, [refreshMe])
+
+  const login = useCallback(async (email: string, password: string) => {
+    const response = await postLogin({ email, password })
+    setUser(response.user)
+  }, [])
+
+  const register = useCallback(async (email: string, password: string, name?: string) => {
+    await postRegister({ email, password, name })
+    return { requiresEmailConfirmation: true }
+  }, [])
+
+  const logout = useCallback(async () => {
+    try {
+      await postLogout()
+    } finally {
+      setUser(null)
     }
   }, [])
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      session,
-      user: session?.user ?? null,
+      user,
       loading,
-      signIn: async (email, password) => {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-
-        if (error) {
-          throw error
-        }
-      },
-      signUp: async (email, password, name) => {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: name ? { name } : undefined,
-          },
-        })
-
-        if (error) {
-          throw error
-        }
-
-        return {
-          requiresEmailConfirmation: !data.session,
-        }
-      },
-      signOut: async () => {
-        const { error } = await supabase.auth.signOut()
-        if (error) {
-          throw error
-        }
-      },
+      login,
+      register,
+      logout,
+      refreshMe,
+      signIn: login,
+      signUp: register,
+      signOut: logout,
     }),
-    [loading, session],
+    [loading, login, logout, refreshMe, register, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -8,6 +8,7 @@ import { CreateAccountPage } from './pages/CreateAccountPage'
 import { DemoPage } from './pages/DemoPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
+import { VerifyPage } from './pages/VerifyPage'
 
 const defaultMeta = {
   title: 'Kufu - AI Automation for Customer Inquiries',
@@ -45,6 +46,10 @@ const routeMeta: Record<string, { title: string; description: string }> = {
     title: 'Create Account - Kufu',
     description: 'Create your Kufu account and start automating customer conversations with AI.',
   },
+  '/verify': {
+    title: 'Verify Email - Kufu',
+    description: 'Verify your Kufu account email address to activate sign in.',
+  },
 }
 
 function MetaManager() {
@@ -75,6 +80,7 @@ function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/create-account" element={<CreateAccountPage />} />
+        <Route path="/verify" element={<VerifyPage />} />
         <Route path="*" element={<Navigate replace to="/" />} />
       </Routes>
     </>

@@ -9,9 +9,8 @@ export function getReadableAuthError(error: unknown, fallbackMessage: string): s
   }
 
   if (message === 'Failed to fetch') {
-    return 'Network/CORS issue reaching Supabase. Check Vercel Supabase env vars, Supabase URL config, and disable strict browser shields/ad blockers for this site.'
+    return 'Network/CORS issue reaching backend auth API. Check API URL/proxy and CORS configuration.'
   }
 
   return message
 }
-

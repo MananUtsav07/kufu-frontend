@@ -18,7 +18,7 @@ type AuthActionsProps = {
 function AuthActions({ isDemo }: AuthActionsProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { loading, user, signOut } = useAuth();
+  const { loading, user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -68,20 +68,16 @@ function AuthActions({ isDemo }: AuthActionsProps) {
         }}
         className="hidden md:inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-700 px-5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 transition-all duration-200 hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/5"
       >
-        Sign in
+        Login
       </Link>
     );
   }
 
-  const avatarUrl =
-    typeof user.user_metadata.avatar_url === "string"
-      ? user.user_metadata.avatar_url
-      : "";
   const avatarInitial = (user.email?.charAt(0) ?? "?").toUpperCase();
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      await logout();
       navigate("/", { replace: true });
     } finally {
       setIsMenuOpen(false);
@@ -103,15 +99,7 @@ function AuthActions({ isDemo }: AuthActionsProps) {
           isDemo ? "size-9" : "size-10"
         }`}
       >
-        {avatarUrl ? (
-          <img
-            alt="User avatar"
-            className="size-full rounded-full object-cover"
-            src={avatarUrl}
-          />
-        ) : (
-          <span className="text-sm font-semibold">{avatarInitial}</span>
-        )}
+        <span className="text-sm font-semibold">{avatarInitial}</span>
       </button>
 
       <AnimatePresence>

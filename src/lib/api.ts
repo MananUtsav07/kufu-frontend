@@ -4,6 +4,12 @@ type ApiOkResponse = {
   ok: true
 }
 
+export type AuthUser = {
+  id: string
+  email: string
+  isVerified?: boolean
+}
+
 type ChatLogMessage = Pick<Message, 'role' | 'content' | 'createdAt'>
 
 export type DemoLeadPayload = {
@@ -38,6 +44,17 @@ export type ChatPayload = {
     page?: string
   }
   sessionId?: string
+}
+
+export type RegisterPayload = {
+  email: string
+  password: string
+  name?: string
+}
+
+export type LoginPayload = {
+  email: string
+  password: string
 }
 
 type ApiErrorPayload = {
@@ -82,6 +99,7 @@ async function postJson<TPayload, TResponse>(path: string, payload: TPayload): P
   try {
     response = await fetch(resolveApiUrl(path), {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -93,6 +111,33 @@ async function postJson<TPayload, TResponse>(path: string, payload: TPayload): P
       0,
       error,
     )
+  }
+
+  if (!response.ok) {
+    const errorPayload = await parseErrorPayload(response)
+    throw new ApiError(
+      errorPayload?.error ??
+        errorPayload?.reply ??
+        `Request failed with status ${response.status}`,
+      response.status,
+      errorPayload,
+    )
+  }
+
+  return (await response.json()) as TResponse
+}
+
+async function getJson<TResponse>(path: string, headers?: HeadersInit): Promise<TResponse> {
+  let response: Response
+
+  try {
+    response = await fetch(resolveApiUrl(path), {
+      method: 'GET',
+      credentials: 'include',
+      headers,
+    })
+  } catch (error) {
+    throw new ApiError(error instanceof Error ? error.message : 'Network error', 0, error)
   }
 
   if (!response.ok) {
@@ -152,6 +197,7 @@ export async function streamChat(
   try {
     response = await fetch(resolveApiUrl('/api/chat'), {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -245,4 +291,32 @@ export function postContactLead(payload: ContactLeadPayload): Promise<ApiOkRespo
 
 export function postChatLog(payload: ChatLogPayload): Promise<ApiOkResponse> {
   return postJson<ChatLogPayload, ApiOkResponse>('/api/chat/log', payload)
+}
+
+export function postRegister(payload: RegisterPayload): Promise<ApiOkResponse> {
+  return postJson<RegisterPayload, ApiOkResponse>('/api/auth/register', payload)
+}
+
+export function postLogin(payload: LoginPayload): Promise<{ ok: true; user: AuthUser }> {
+  return postJson<LoginPayload, { ok: true; user: AuthUser }>('/api/auth/login', payload)
+}
+
+export function postLogout(): Promise<ApiOkResponse> {
+  return postJson<Record<string, never>, ApiOkResponse>('/api/auth/logout', {})
+}
+
+export function getMe(): Promise<{ ok: true; user: AuthUser }> {
+  return getJson<{ ok: true; user: AuthUser }>('/api/auth/me')
+}
+
+export function verifyAccount(params: { token: string; email: string }): Promise<{ ok: boolean; message?: string; error?: string }> {
+  const query = new URLSearchParams({
+    token: params.token,
+    email: params.email,
+    format: 'json',
+  }).toString()
+
+  return getJson<{ ok: boolean; message?: string; error?: string }>(`/api/auth/verify?${query}`, {
+    Accept: 'application/json',
+  })
 }

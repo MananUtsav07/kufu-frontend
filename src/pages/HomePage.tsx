@@ -146,7 +146,7 @@ function FAQItem({ question, answer, defaultOpen = false }: FAQItemProps) {
 // ── NavbarAuth ─────────────────────────────────────────────────────────────
 function NavbarAuth() {
   const navigate = useNavigate();
-  const { loading, user, signOut } = useAuth();
+  const { loading, user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -178,17 +178,16 @@ function NavbarAuth() {
         to="/login"
         className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-slate-400 border border-white/10 px-4 py-1.5 rounded-full hover:border-indigo-500/50 hover:text-indigo-300 hover:bg-indigo-500/5 transition-all"
       >
-        Sign in
+        Login
       </Link>
     );
   }
 
-  const avatarUrl = typeof user.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : "";
   const avatarInitial = (user.email?.charAt(0) ?? "?").toUpperCase();
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      await logout();
       navigate("/", { replace: true });
     } finally {
       setMenuOpen(false);
@@ -201,15 +200,11 @@ function NavbarAuth() {
         type="button"
         aria-expanded={menuOpen}
         aria-haspopup="menu"
-        onClick={() => setMenuOpen((v) => !v)}
-        className="w-9 h-9 rounded-full grad-bg flex items-center justify-center text-white text-sm font-bold shadow-[0_0_0_2px_rgba(99,102,241,0.25)] hover:scale-105 transition-transform overflow-hidden"
-      >
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" />
-        ) : (
-          <span>{avatarInitial}</span>
-        )}
-      </button>
+      onClick={() => setMenuOpen((v) => !v)}
+      className="w-9 h-9 rounded-full grad-bg flex items-center justify-center text-white text-sm font-bold shadow-[0_0_0_2px_rgba(99,102,241,0.25)] hover:scale-105 transition-transform overflow-hidden"
+    >
+      <span>{avatarInitial}</span>
+    </button>
 
       {menuOpen && (
         <div

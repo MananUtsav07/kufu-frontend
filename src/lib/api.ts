@@ -156,7 +156,15 @@ export function getApiBaseUrl(): string {
   if (typeof envValue === 'string' && envValue.trim().length > 0) {
     return envValue.trim().replace(/\/+$/, '')
   }
-  return 'http://localhost:8787'
+
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname.toLowerCase()
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://localhost:8787'
+    }
+  }
+
+  return 'https://kufu-backend.vercel.app'
 }
 
 function resolveApiUrl(path: string): string {

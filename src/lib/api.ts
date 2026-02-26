@@ -4,10 +4,59 @@ type ApiOkResponse = {
   ok: true
 }
 
+type ApiErrorPayload = {
+  ok?: false
+  error?: string
+  message?: string
+  reply?: string
+  details?: unknown
+  status?: number | null
+  issues?: unknown
+}
+
+type RequestOptions = {
+  method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
+  body?: unknown
+  headers?: HeadersInit
+  auth?: boolean
+}
+
 export type AuthUser = {
   id: string
   email: string
-  isVerified?: boolean
+  is_verified: boolean
+}
+
+export type AuthClient = {
+  id: string
+  business_name: string
+  website_url: string | null
+  plan: string
+}
+
+export type AuthMeResponse = {
+  ok: true
+  user: AuthUser
+  client: AuthClient
+}
+
+export type RegisterPayload = {
+  email: string
+  password: string
+  business_name?: string
+  website_url?: string
+}
+
+export type LoginPayload = {
+  email: string
+  password: string
+}
+
+export type LoginResponse = {
+  ok: true
+  token: string
+  user: AuthUser
+  client: AuthClient
 }
 
 type ChatLogMessage = Pick<Message, 'role' | 'content' | 'createdAt'>
@@ -42,28 +91,46 @@ export type ChatPayload = {
   messages: ChatMessagePayload[]
   metadata?: {
     page?: string
+    client_id?: string
   }
   sessionId?: string
+  client_id?: string
+  lead?: {
+    name?: string
+    email?: string
+    phone?: string
+    need?: string
+    client_id?: string
+  }
 }
 
-export type RegisterPayload = {
-  email: string
-  password: string
-  name?: string
+export type DashboardMetrics = {
+  total_leads: number
+  leads_last_7_days: number
+  number_of_chats: number
 }
 
-export type LoginPayload = {
-  email: string
-  password: string
+export type DashboardLead = {
+  id: string
+  client_id: string
+  name: string | null
+  email: string | null
+  phone: string | null
+  need: string | null
+  status: string
+  source: string | null
+  created_at: string
 }
 
-type ApiErrorPayload = {
-  ok?: false
-  error?: string
-  reply?: string
-  details?: unknown
-  status?: number | null
-  issues?: unknown
+export type DashboardKnowledge = {
+  id?: string
+  client_id: string
+  services_text: string | null
+  pricing_text: string | null
+  faqs_json: unknown[]
+  hours_text: string | null
+  contact_text: string | null
+  updated_at?: string
 }
 
 export class ApiError extends Error {
@@ -78,12 +145,27 @@ export class ApiError extends Error {
   }
 }
 
-const getApiBaseUrl = (): string => {
-  const envValue = import.meta.env.VITE_API_BASE_URL
-  return typeof envValue === 'string' ? envValue.trim().replace(/\/$/, '') : ''
+let authToken: string | null = null
+
+export function setApiAuthToken(token: string | null) {
+  authToken = token?.trim() ? token.trim() : null
 }
 
-const resolveApiUrl = (path: string): string => `${getApiBaseUrl()}${path}`
+export function getApiBaseUrl(): string {
+  const envValue = import.meta.env.VITE_API_BASE_URL
+  if (typeof envValue === 'string' && envValue.trim().length > 0) {
+    return envValue.trim().replace(/\/+$/, '')
+  }
+  return 'http://localhost:8787'
+}
+
+function resolveApiUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+  const normalPath = path.startsWith('/') ? path : `/${path}`
+  return `${getApiBaseUrl()}${normalPath}`
+}
 
 async function parseErrorPayload(response: Response): Promise<ApiErrorPayload | null> {
   try {
@@ -93,48 +175,23 @@ async function parseErrorPayload(response: Response): Promise<ApiErrorPayload | 
   }
 }
 
-async function postJson<TPayload, TResponse>(path: string, payload: TPayload): Promise<TResponse> {
-  let response: Response
-
-  try {
-    response = await fetch(resolveApiUrl(path), {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
-  } catch (error) {
-    throw new ApiError(
-      error instanceof Error ? error.message : 'Network error',
-      0,
-      error,
-    )
+async function requestJson<TResponse>(path: string, options: RequestOptions = {}): Promise<TResponse> {
+  const headers = new Headers(options.headers ?? {})
+  headers.set('Accept', 'application/json')
+  if (options.body !== undefined) {
+    headers.set('Content-Type', 'application/json')
+  }
+  if (options.auth !== false && authToken) {
+    headers.set('Authorization', `Bearer ${authToken}`)
   }
 
-  if (!response.ok) {
-    const errorPayload = await parseErrorPayload(response)
-    throw new ApiError(
-      errorPayload?.error ??
-        errorPayload?.reply ??
-        `Request failed with status ${response.status}`,
-      response.status,
-      errorPayload,
-    )
-  }
-
-  return (await response.json()) as TResponse
-}
-
-async function getJson<TResponse>(path: string, headers?: HeadersInit): Promise<TResponse> {
   let response: Response
-
   try {
     response = await fetch(resolveApiUrl(path), {
-      method: 'GET',
-      credentials: 'include',
+      method: options.method ?? (options.body !== undefined ? 'POST' : 'GET'),
       headers,
+      credentials: 'include',
+      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
     })
   } catch (error) {
     throw new ApiError(error instanceof Error ? error.message : 'Network error', 0, error)
@@ -144,6 +201,7 @@ async function getJson<TResponse>(path: string, headers?: HeadersInit): Promise<
     const errorPayload = await parseErrorPayload(response)
     throw new ApiError(
       errorPayload?.error ??
+        errorPayload?.message ??
         errorPayload?.reply ??
         `Request failed with status ${response.status}`,
       response.status,
@@ -151,6 +209,9 @@ async function getJson<TResponse>(path: string, headers?: HeadersInit): Promise<
     )
   }
 
+  if (response.status === 204) {
+    return {} as TResponse
+  }
   return (await response.json()) as TResponse
 }
 
@@ -158,8 +219,8 @@ function parseSseEvents(rawChunk: string): { events: Array<{ event?: string; dat
   const normalized = rawChunk.replace(/\r\n/g, '\n')
   const blocks = normalized.split('\n\n')
   const rest = blocks.pop() ?? ''
-
   const events: Array<{ event?: string; data?: string }> = []
+
   for (const block of blocks) {
     const lines = block.split('\n')
     let eventName: string | undefined
@@ -200,6 +261,7 @@ export async function streamChat(
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
       },
       body: JSON.stringify(payload),
     })
@@ -211,6 +273,7 @@ export async function streamChat(
     const errorPayload = await parseErrorPayload(response)
     throw new ApiError(
       errorPayload?.error ??
+        errorPayload?.message ??
         errorPayload?.reply ??
         `Request failed with status ${response.status}`,
       response.status,
@@ -220,13 +283,12 @@ export async function streamChat(
 
   const contentType = response.headers.get('content-type') ?? ''
   if (contentType.includes('application/json')) {
-    const payload = (await response.json()) as { reply?: unknown; meta?: unknown }
-    if (typeof payload.reply === 'string' && payload.reply.length > 0) {
-      handlers.onToken(payload.reply)
+    const json = (await response.json()) as { reply?: unknown }
+    if (typeof json.reply === 'string' && json.reply.length > 0) {
+      handlers.onToken(json.reply)
       return
     }
-
-    throw new ApiError('Invalid chat response shape', response.status, payload)
+    throw new ApiError('Invalid chat response shape', response.status, json)
   }
 
   if (!response.body) {
@@ -236,32 +298,28 @@ export async function streamChat(
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
-  let doneReceived = false
 
   while (true) {
     const { done, value } = await reader.read()
     if (done) {
       break
     }
-
     buffer += decoder.decode(value, { stream: true })
     const { events, rest } = parseSseEvents(buffer)
     buffer = rest
 
     for (const event of events) {
       if (event.event === 'done') {
-        doneReceived = true
-        continue
+        return
       }
 
       const rawData = event.data ?? ''
       if (!rawData || rawData === '[DONE]') {
-        doneReceived = true
         continue
       }
 
       try {
-        const parsed = JSON.parse(rawData) as { token?: unknown; error?: unknown }
+        const parsed = JSON.parse(rawData) as { token?: unknown }
         if (typeof parsed.token === 'string') {
           handlers.onToken(parsed.token)
         }
@@ -270,53 +328,87 @@ export async function streamChat(
       }
     }
   }
-
-  if (!doneReceived && buffer.trim().length > 0) {
-    const { events } = parseSseEvents(`${buffer}\n\n`)
-    for (const event of events) {
-      if (event.event === 'done' || event.data === '[DONE]') {
-        doneReceived = true
-      }
-    }
-  }
 }
 
 export function postDemoLead(payload: DemoLeadPayload): Promise<ApiOkResponse> {
-  return postJson<DemoLeadPayload, ApiOkResponse>('/api/leads/demo', payload)
+  return requestJson<ApiOkResponse>('/api/leads/demo', { body: payload })
 }
 
 export function postContactLead(payload: ContactLeadPayload): Promise<ApiOkResponse> {
-  return postJson<ContactLeadPayload, ApiOkResponse>('/api/leads/contact', payload)
+  return requestJson<ApiOkResponse>('/api/leads/contact', { body: payload })
 }
 
 export function postChatLog(payload: ChatLogPayload): Promise<ApiOkResponse> {
-  return postJson<ChatLogPayload, ApiOkResponse>('/api/chat/log', payload)
+  return requestJson<ApiOkResponse>('/api/chat/log', { body: payload })
+}
+
+export function getHealth(): Promise<{ ok: boolean; env: string; openaiKeyPresent: boolean }> {
+  return requestJson('/api/health', { auth: false })
 }
 
 export function postRegister(payload: RegisterPayload): Promise<ApiOkResponse> {
-  return postJson<RegisterPayload, ApiOkResponse>('/api/auth/register', payload)
+  return requestJson<ApiOkResponse>('/api/auth/register', { body: payload, auth: false })
 }
 
-export function postLogin(payload: LoginPayload): Promise<{ ok: true; user: AuthUser }> {
-  return postJson<LoginPayload, { ok: true; user: AuthUser }>('/api/auth/login', payload)
+export function postVerifyEmail(payload: { token: string }): Promise<ApiOkResponse> {
+  return requestJson<ApiOkResponse>('/api/auth/verify-email', { body: payload, auth: false })
+}
+
+export function postLogin(payload: LoginPayload): Promise<LoginResponse> {
+  return requestJson<LoginResponse>('/api/auth/login', { body: payload, auth: false })
 }
 
 export function postLogout(): Promise<ApiOkResponse> {
-  return postJson<Record<string, never>, ApiOkResponse>('/api/auth/logout', {})
+  return requestJson<ApiOkResponse>('/api/auth/logout', { body: {} })
 }
 
-export function getMe(): Promise<{ ok: true; user: AuthUser }> {
-  return getJson<{ ok: true; user: AuthUser }>('/api/auth/me')
+export function getMe(): Promise<AuthMeResponse> {
+  return requestJson<AuthMeResponse>('/api/auth/me')
 }
 
-export function verifyAccount(params: { token: string; email: string }): Promise<{ ok: boolean; message?: string; error?: string }> {
-  const query = new URLSearchParams({
-    token: params.token,
-    email: params.email,
-    format: 'json',
-  }).toString()
+export function getDashboardMetrics(): Promise<{ ok: true; metrics: DashboardMetrics }> {
+  return requestJson('/api/dashboard/metrics')
+}
 
-  return getJson<{ ok: boolean; message?: string; error?: string }>(`/api/auth/verify?${query}`, {
-    Accept: 'application/json',
+export function getDashboardLeads(params?: {
+  limit?: number
+  offset?: number
+  status?: string
+}): Promise<{ ok: true; leads: DashboardLead[]; pagination: { limit: number; offset: number; total: number } }> {
+  const query = new URLSearchParams()
+  if (params?.limit !== undefined) query.set('limit', String(params.limit))
+  if (params?.offset !== undefined) query.set('offset', String(params.offset))
+  if (params?.status) query.set('status', params.status)
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return requestJson(`/api/dashboard/leads${suffix}`)
+}
+
+export function patchDashboardLeadStatus(
+  leadId: string,
+  status: string,
+): Promise<{ ok: true; lead: DashboardLead }> {
+  return requestJson(`/api/dashboard/leads/${encodeURIComponent(leadId)}`, {
+    method: 'PATCH',
+    body: { status },
   })
+}
+
+export function getDashboardKnowledge(): Promise<{ ok: true; knowledge: DashboardKnowledge }> {
+  return requestJson('/api/dashboard/knowledge')
+}
+
+export function postDashboardKnowledge(payload: {
+  services_text?: string | null
+  pricing_text?: string | null
+  faqs_json?: unknown[]
+  hours_text?: string | null
+  contact_text?: string | null
+}): Promise<{ ok: true; knowledge: DashboardKnowledge }> {
+  return requestJson('/api/dashboard/knowledge', {
+    body: payload,
+  })
+}
+
+export function verifyAccount(params: { token: string }): Promise<ApiOkResponse> {
+  return postVerifyEmail({ token: params.token })
 }

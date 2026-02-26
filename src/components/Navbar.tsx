@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-import { useAuth } from "../auth/AuthProvider";
+import { useAuth } from "../lib/auth-context";
 import { BrandBotIcon } from "./BrandBotIcon";
 import { brandName } from "../lib/brand";
 import { scrollToId } from "../lib/scrollToId";
@@ -102,7 +102,28 @@ function AuthActions() {
               <p className="text-xs text-slate-500 truncate">{user.email}</p>
             </div>
             <Link
-              to="/demo"
+              to="/dashboard/profile"
+              role="menuitem"
+              onClick={() => setIsMenuOpen(false)}
+              className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/[0.06] hover:text-white transition-colors"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 21a8 8 0 0 0-16 0" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              Profile
+            </Link>
+            <Link
+              to="/dashboard"
               role="menuitem"
               onClick={() => setIsMenuOpen(false)}
               className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/[0.06] hover:text-white transition-colors"
@@ -144,7 +165,7 @@ function AuthActions() {
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-              Sign out
+              Logout
             </button>
           </motion.div>
         )}

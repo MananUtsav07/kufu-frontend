@@ -1,0 +1,13 @@
+.dashboard-knowledge .knowledge-card {
+  box-shadow: 0 16px 34px rgb(2 6 23 / 0.32);
+}
+
+.knowledge-input:-webkit-autofill,
+.knowledge-input:-webkit-autofill:hover,
+.knowledge-input:-webkit-autofill:focus,
+.knowledge-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 9999px rgb(255 255 255 / 0.03) inset !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+  caret-color: #f1f5f9;
+  transition: background-color 9999s ease-in-out 0s;
+}

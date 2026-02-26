@@ -1,0 +1,44 @@
+.auth-grad-bg {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.login-page-bg .login-glow-top {
+  top: -110px;
+  right: -120px;
+  height: 360px;
+  width: 360px;
+  border-radius: 999px;
+  background: rgb(79 70 229 / 0.22);
+  filter: blur(90px);
+}
+
+.login-page-bg .login-glow-bottom {
+  bottom: -110px;
+  left: -120px;
+  height: 320px;
+  width: 320px;
+  border-radius: 999px;
+  background: rgb(139 92 246 / 0.18);
+  filter: blur(85px);
+}
+
+.auth-grid-bg {
+  background-image:
+    linear-gradient(rgb(99 102 241 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(99 102 241 / 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.login-card {
+  box-shadow: 0 24px 70px rgb(0 0 0 / 0.45);
+}
+
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus,
+.auth-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 9999px rgb(255 255 255 / 0.03) inset !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+  caret-color: #f1f5f9;
+  transition: background-color 9999s ease-in-out 0s;
+}

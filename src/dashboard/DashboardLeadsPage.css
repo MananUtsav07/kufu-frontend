@@ -1,0 +1,4 @@
+.dashboard-leads .leads-table-card,
+.dashboard-leads .leads-toolbar {
+  box-shadow: 0 16px 34px rgb(2 6 23 / 0.32);
+}

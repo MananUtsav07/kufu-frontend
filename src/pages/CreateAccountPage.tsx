@@ -74,8 +74,6 @@ export function CreateAccountPage() {
       <Navbar page="home" />
       <div className="relative flex min-h-[calc(100vh-62px)] items-center justify-center overflow-hidden px-4 py-10">
        <style>{`
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800;900&display=swap');
-  .font-display { font-family: 'Syne', sans-serif; }
   .grad-bg { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
   input:-webkit-autofill,
   input:-webkit-autofill:hover,

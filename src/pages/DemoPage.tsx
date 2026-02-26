@@ -48,14 +48,9 @@ export function DemoPage() {
   };
 
   return (
-    <div
-      style={{ fontFamily: "'DM Sans', sans-serif" }}
-      className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#060714] text-slate-200"
-    >
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#060714] text-slate-200">
       {/* ── Google Fonts ── */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Syne:wght@700;800;900&display=swap');
-        .font-display { font-family: 'Syne', sans-serif; }
         input, select, textarea { color-scheme: dark; }
         input::placeholder, textarea::placeholder { color: #475569; }
         select option { background: #0f172a; }

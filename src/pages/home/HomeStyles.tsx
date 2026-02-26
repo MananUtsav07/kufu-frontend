@@ -1,9 +1,6 @@
 export function HomeStyles() {
   return (
     <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800;900&display=swap');
-      body { font-family: 'DM Sans', sans-serif; }
-      .font-display { font-family: 'Syne', sans-serif; }
       .grad-text {
         background: linear-gradient(135deg, #a5b4fc 0%, #c4b5fd 50%, #818cf8 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;

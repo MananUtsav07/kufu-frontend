@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -198,7 +199,6 @@ export function Navbar({ page: _page }: NavbarProps) {
     <>
       {/* CSS variables & keyframes */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
         .nav-link {
           position: relative;
           transition: color 0.2s;
@@ -220,7 +220,6 @@ export function Navbar({ page: _page }: NavbarProps) {
           width: 100%;
         }
 
-        .font-display { font-family: 'Syne', sans-serif; }
         .grad-bg { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
       `}</style>
 

@@ -23,7 +23,7 @@ export function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-300 font-sans antialiased overflow-x-hidden">
+    <div className="min-h-screen bg-[#020617] text-slate-300 antialiased overflow-x-hidden">
       <HomeStyles />
       <Navbar page="home" />
 

@@ -13,21 +13,24 @@ This repo now has two deploy targets:
 
 Environment Variables:
 
-- `VITE_API_BASE_URL=https://<backend-project>.vercel.app`
+- `VITE_API_BASE_URL=https://<your-render-backend>.onrender.com`
 - `VITE_SUPABASE_URL=...`
 - `VITE_SUPABASE_ANON_KEY=...`
 
-## Backend Project (Vercel)
+## Backend Project (Render)
 
 - Root Directory: `kufu-backend`
-- Framework Preset: `Other`
+- Build Command: `npm ci --include=dev && npm run build`
+- Start Command: `npm run start`
 
 Environment Variables:
 
 - `OPENAI_API_KEY=...`
 - `OPENAI_MODEL=gpt-4o-mini` (optional)
-- `CORS_ORIGIN=https://<frontend-project>.vercel.app,https://*.vercel.app`
-- `DATA_DIR=/tmp/kufu-data` (optional)
+- `FRONTEND_URL=https://<frontend-domain>`
+- `BACKEND_BASE_URL=https://<your-render-backend>.onrender.com`
+- `ALLOWED_ORIGINS=https://<frontend-domain>`
+- `NPM_CONFIG_PRODUCTION=false`
 
 ## Notes
 

@@ -193,6 +193,22 @@ export type DashboardChatbot = {
   created_at: string
 }
 
+export type RagIngestionRunStatus = 'running' | 'done' | 'failed' | 'canceled'
+
+export type RagIngestionRun = {
+  runId: string
+  chatbotId: string
+  status: RagIngestionRunStatus
+  pagesFound: number
+  pagesCrawled: number
+  chunksWritten: number
+  error: string | null
+  cancelRequested: boolean
+  startedAt: string
+  finishedAt: string | null
+  updatedAt: string
+}
+
 export type AdminOverview = {
   total_users: number
   total_clients: number
@@ -225,7 +241,11 @@ export function getApiBaseUrl(): string {
     return envValue.trim().replace(/\/+$/, '')
   }
 
-  return import.meta.env.DEV ? 'http://localhost:8787' : 'https://kufu-backend.vercel.app'
+  if (import.meta.env.DEV) {
+    return 'http://localhost:8787'
+  }
+
+  throw new Error('Missing VITE_API_BASE_URL in production build. Point it to your Render backend URL.')
 }
 
 function resolveApiUrl(path: string): string {
@@ -485,6 +505,32 @@ export function deleteDashboardChatbot(chatbotId: string): Promise<ApiOkResponse
 
 export function getDashboardEmbed(chatbotId: string): Promise<{ ok: true; snippet: string; chatbot: Pick<DashboardChatbot, 'id' | 'name' | 'widget_public_key'> }> {
   return requestJson(`/api/dashboard/embed/${encodeURIComponent(chatbotId)}`)
+}
+
+export function postRagIngestStart(payload: {
+  chatbotId: string
+  websiteUrl: string
+  maxPages?: number
+}): Promise<{ ok: true; runId: string; status: 'running' }> {
+  return requestJson('/api/rag/ingest/start', { body: payload })
+}
+
+export function postRagIngestResync(payload: {
+  chatbotId: string
+  websiteUrl?: string
+  maxPages?: number
+}): Promise<{ ok: true; runId: string; status: 'running' }> {
+  return requestJson('/api/rag/ingest/resync', { body: payload })
+}
+
+export function getRagIngestStatus(runId: string): Promise<{ ok: true; run: RagIngestionRun }> {
+  return requestJson(`/api/rag/ingest/status?runId=${encodeURIComponent(runId)}`)
+}
+
+export function postRagIngestCancel(runId: string): Promise<{ ok: true; runId: string; status: 'cancel_requested' }> {
+  return requestJson('/api/rag/ingest/cancel', {
+    body: { runId },
+  })
 }
 
 export function getDashboardKnowledge(): Promise<{ ok: true; knowledge: DashboardKnowledge }> {

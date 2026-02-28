@@ -1,4 +1,4 @@
-import {
+﻿import {
   createContext,
   type PropsWithChildren,
   useCallback,
@@ -19,6 +19,8 @@ import {
   setApiAuthToken,
   type AuthClient,
   type AuthUser,
+  type Plan,
+  type Subscription,
 } from './api'
 
 const TOKEN_STORAGE_KEY = 'kufu_auth_token_v1'
@@ -27,6 +29,7 @@ export type SessionUser = {
   id: string
   email: string
   isVerified: boolean
+  role: 'user' | 'admin'
 }
 
 export type SessionClient = {
@@ -47,10 +50,13 @@ type AuthContextValue = {
   user: SessionUser | null
   client: SessionClient | null
   token: string | null
+  subscription: Subscription | null
+  plan: Plan | null
   loading: boolean
   isAuthenticated: boolean
+  isAdmin: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (input: RegisterInput) => Promise<void>
+  register: (input: RegisterInput) => Promise<{ devToken?: string }>
   verifyEmail: (token: string) => Promise<void>
   logout: () => Promise<void>
   refreshMe: () => Promise<void>
@@ -67,6 +73,7 @@ function toSessionUser(user: AuthUser): SessionUser {
     id: user.id,
     email: user.email,
     isVerified: Boolean(user.is_verified),
+    role: user.role,
   }
 }
 
@@ -102,7 +109,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [token, setTokenState] = useState<string | null>(() => readStoredToken())
   const [user, setUser] = useState<SessionUser | null>(null)
   const [client, setClient] = useState<SessionClient | null>(null)
+  const [subscription, setSubscription] = useState<Subscription | null>(null)
+  const [plan, setPlan] = useState<Plan | null>(null)
   const [loading, setLoading] = useState(true)
+
   const tokenRef = useRef<string | null>(token)
 
   const setToken = useCallback((nextToken: string | null) => {
@@ -115,6 +125,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const clearSession = useCallback(() => {
     setUser(null)
     setClient(null)
+    setSubscription(null)
+    setPlan(null)
     setToken(null)
   }, [setToken])
 
@@ -122,6 +134,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (!tokenRef.current) {
       setUser(null)
       setClient(null)
+      setSubscription(null)
+      setPlan(null)
       return
     }
 
@@ -129,6 +143,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const response = await getMe()
       setUser(toSessionUser(response.user))
       setClient(toSessionClient(response.client))
+      setSubscription(response.subscription)
+      setPlan(response.plan)
     } catch (error) {
       if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
         clearSession()
@@ -145,6 +161,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     let mounted = true
+
     void (async () => {
       try {
         await refreshMe()
@@ -165,20 +182,27 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
   }, [clearSession, refreshMe])
 
-  const login = useCallback(async (email: string, password: string) => {
-    const response = await postLogin({ email, password })
-    setToken(response.token)
-    setUser(toSessionUser(response.user))
-    setClient(toSessionClient(response.client))
-  }, [setToken])
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const response = await postLogin({ email, password })
+      setToken(response.token)
+      setUser(toSessionUser(response.user))
+      setClient(toSessionClient(response.client))
+      setSubscription(response.subscription)
+      setPlan(response.plan)
+    },
+    [setToken],
+  )
 
   const register = useCallback(async (input: RegisterInput) => {
-    await postRegister({
+    const response = await postRegister({
       email: input.email,
       password: input.password,
       business_name: input.businessName,
       website_url: input.websiteUrl,
     })
+
+    return { devToken: response.devToken }
   }, [])
 
   const verifyEmail = useCallback(async (verificationToken: string) => {
@@ -198,8 +222,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
       user,
       client,
       token,
+      subscription,
+      plan,
       loading,
       isAuthenticated: Boolean(token && user),
+      isAdmin: user?.role === 'admin',
       login,
       register,
       verifyEmail,
@@ -217,7 +244,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       },
       signOut: logout,
     }),
-    [client, loading, login, logout, refreshMe, register, setToken, token, user, verifyEmail],
+    [client, loading, login, logout, plan, refreshMe, register, setToken, subscription, token, user, verifyEmail],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

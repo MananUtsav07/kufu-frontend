@@ -1,4 +1,4 @@
-import type { Message } from './types'
+﻿import type { Message } from './types'
 
 type ApiOkResponse = {
   ok: true
@@ -21,10 +21,34 @@ type RequestOptions = {
   auth?: boolean
 }
 
+export type Plan = {
+  id?: string
+  code: 'free' | 'starter' | 'pro' | 'business' | string
+  name?: string
+  monthly_message_cap: number | null
+  chatbot_limit: number | null
+  price_inr?: number
+  is_active?: boolean
+}
+
+export type Subscription = {
+  id: string
+  user_id: string
+  plan_code: string
+  status: string
+  current_period_start: string
+  current_period_end: string
+  message_count_in_period: number
+  total_message_count: number
+  created_at?: string
+  updated_at?: string
+}
+
 export type AuthUser = {
   id: string
   email: string
   is_verified: boolean
+  role: 'user' | 'admin'
 }
 
 export type AuthClient = {
@@ -38,6 +62,8 @@ export type AuthMeResponse = {
   ok: true
   user: AuthUser
   client: AuthClient
+  subscription: Subscription
+  plan: Plan
 }
 
 export type RegisterPayload = {
@@ -52,11 +78,8 @@ export type LoginPayload = {
   password: string
 }
 
-export type LoginResponse = {
-  ok: true
+export type LoginResponse = AuthMeResponse & {
   token: string
-  user: AuthUser
-  client: AuthClient
 }
 
 type ChatLogMessage = Pick<Message, 'role' | 'content' | 'createdAt'>
@@ -89,25 +112,25 @@ export type ChatMessagePayload = {
 
 export type ChatPayload = {
   messages: ChatMessagePayload[]
+  sessionId?: string
+  key?: string
+  chatbot_id?: string
+  client_id?: string
   metadata?: {
     page?: string
-    client_id?: string
-  }
-  sessionId?: string
-  client_id?: string
-  lead?: {
-    name?: string
-    email?: string
-    phone?: string
-    need?: string
+    key?: string
+    chatbot_id?: string
     client_id?: string
   }
 }
 
-export type DashboardMetrics = {
-  total_leads: number
-  leads_last_7_days: number
-  number_of_chats: number
+export type DashboardSummary = {
+  messages_used_this_period: number
+  total_messages_lifetime: number
+  plan: string
+  integrations_used: number
+  integration_limit: number
+  tickets_open: number
 }
 
 export type DashboardLead = {
@@ -130,7 +153,52 @@ export type DashboardKnowledge = {
   faqs_json: unknown[]
   hours_text: string | null
   contact_text: string | null
+  knowledge_base_text: string
   updated_at?: string
+}
+
+export type DashboardTicket = {
+  id: string
+  user_id: string
+  subject: string
+  message: string
+  admin_response: string | null
+  status: 'open' | 'closed'
+  created_at: string
+  updated_at: string
+}
+
+export type DashboardQuote = {
+  id: string
+  user_id: string
+  requested_plan: string | null
+  requested_chatbots: number | null
+  requested_unlimited_messages: boolean
+  notes: string | null
+  status: string
+  admin_response: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type DashboardChatbot = {
+  id: string
+  user_id: string
+  client_id: string | null
+  name: string
+  website_url: string | null
+  allowed_domains: string[]
+  widget_public_key: string
+  is_active: boolean
+  created_at: string
+}
+
+export type AdminOverview = {
+  total_users: number
+  total_clients: number
+  active_subscriptions_by_plan: Record<string, number>
+  total_messages_last_24h: number
+  total_messages_last_7d: number
 }
 
 export class ApiError extends Error {
@@ -157,20 +225,14 @@ export function getApiBaseUrl(): string {
     return envValue.trim().replace(/\/+$/, '')
   }
 
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname.toLowerCase()
-    if (host === 'localhost' || host === '127.0.0.1') {
-      return 'http://localhost:8787'
-    }
-  }
-
-  return 'https://kufu-backend.vercel.app'
+  return import.meta.env.DEV ? 'http://localhost:8787' : 'https://kufu-backend.vercel.app'
 }
 
 function resolveApiUrl(path: string): string {
   if (/^https?:\/\//i.test(path)) {
     return path
   }
+
   const normalPath = path.startsWith('/') ? path : `/${path}`
   return `${getApiBaseUrl()}${normalPath}`
 }
@@ -186,9 +248,11 @@ async function parseErrorPayload(response: Response): Promise<ApiErrorPayload | 
 async function requestJson<TResponse>(path: string, options: RequestOptions = {}): Promise<TResponse> {
   const headers = new Headers(options.headers ?? {})
   headers.set('Accept', 'application/json')
+
   if (options.body !== undefined) {
     headers.set('Content-Type', 'application/json')
   }
+
   if (options.auth !== false && authToken) {
     headers.set('Authorization', `Bearer ${authToken}`)
   }
@@ -208,10 +272,7 @@ async function requestJson<TResponse>(path: string, options: RequestOptions = {}
   if (!response.ok) {
     const errorPayload = await parseErrorPayload(response)
     throw new ApiError(
-      errorPayload?.error ??
-        errorPayload?.message ??
-        errorPayload?.reply ??
-        `Request failed with status ${response.status}`,
+      errorPayload?.error ?? errorPayload?.message ?? errorPayload?.reply ?? `Request failed (${response.status})`,
       response.status,
       errorPayload,
     )
@@ -220,6 +281,7 @@ async function requestJson<TResponse>(path: string, options: RequestOptions = {}
   if (response.status === 204) {
     return {} as TResponse
   }
+
   return (await response.json()) as TResponse
 }
 
@@ -246,10 +308,7 @@ function parseSseEvents(rawChunk: string): { events: Array<{ event?: string; dat
       continue
     }
 
-    events.push({
-      event: eventName,
-      data: dataParts.join('\n'),
-    })
+    events.push({ event: eventName, data: dataParts.join('\n') })
   }
 
   return { events, rest }
@@ -260,6 +319,7 @@ export async function streamChat(
   handlers: {
     onToken: (token: string) => void
   },
+  options?: { auth?: boolean },
 ): Promise<void> {
   let response: Response
 
@@ -270,6 +330,7 @@ export async function streamChat(
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json, text/event-stream',
+        ...(options?.auth !== false && authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       },
       body: JSON.stringify(payload),
     })
@@ -280,10 +341,7 @@ export async function streamChat(
   if (!response.ok) {
     const errorPayload = await parseErrorPayload(response)
     throw new ApiError(
-      errorPayload?.error ??
-        errorPayload?.message ??
-        errorPayload?.reply ??
-        `Request failed with status ${response.status}`,
+      errorPayload?.error ?? errorPayload?.message ?? errorPayload?.reply ?? `Request failed (${response.status})`,
       response.status,
       errorPayload,
     )
@@ -296,11 +354,12 @@ export async function streamChat(
       handlers.onToken(json.reply)
       return
     }
-    throw new ApiError('Invalid chat response shape', response.status, json)
+
+    throw new ApiError('Invalid chat response', response.status, json)
   }
 
   if (!response.body) {
-    throw new ApiError('Response stream is unavailable', 0)
+    throw new ApiError('Response stream unavailable', 0)
   }
 
   const reader = response.body.getReader()
@@ -312,6 +371,7 @@ export async function streamChat(
     if (done) {
       break
     }
+
     buffer += decoder.decode(value, { stream: true })
     const { events, rest } = parseSseEvents(buffer)
     buffer = rest
@@ -338,44 +398,141 @@ export async function streamChat(
   }
 }
 
-export function postDemoLead(payload: DemoLeadPayload): Promise<ApiOkResponse> {
-  return requestJson<ApiOkResponse>('/api/leads/demo', { body: payload })
-}
-
-export function postContactLead(payload: ContactLeadPayload): Promise<ApiOkResponse> {
-  return requestJson<ApiOkResponse>('/api/leads/contact', { body: payload })
-}
-
-export function postChatLog(payload: ChatLogPayload): Promise<ApiOkResponse> {
-  return requestJson<ApiOkResponse>('/api/chat/log', { body: payload })
-}
-
 export function getHealth(): Promise<{ ok: boolean; env: string; openaiKeyPresent: boolean }> {
   return requestJson('/api/health', { auth: false })
 }
 
-export function postRegister(payload: RegisterPayload): Promise<ApiOkResponse> {
-  return requestJson<ApiOkResponse>('/api/auth/register', { body: payload, auth: false })
+export function postRegister(payload: RegisterPayload): Promise<ApiOkResponse & { devToken?: string }> {
+  return requestJson('/api/auth/register', { body: payload, auth: false })
 }
 
 export function postVerifyEmail(payload: { token: string }): Promise<ApiOkResponse> {
-  return requestJson<ApiOkResponse>('/api/auth/verify-email', { body: payload, auth: false })
+  return requestJson('/api/auth/verify-email', { body: payload, auth: false })
 }
 
 export function postLogin(payload: LoginPayload): Promise<LoginResponse> {
-  return requestJson<LoginResponse>('/api/auth/login', { body: payload, auth: false })
+  return requestJson('/api/auth/login', { body: payload, auth: false })
 }
 
 export function postLogout(): Promise<ApiOkResponse> {
-  return requestJson<ApiOkResponse>('/api/auth/logout', { body: {} })
+  return requestJson('/api/auth/logout', { body: {} })
 }
 
 export function getMe(): Promise<AuthMeResponse> {
-  return requestJson<AuthMeResponse>('/api/auth/me')
+  return requestJson('/api/auth/me')
 }
 
-export function getDashboardMetrics(): Promise<{ ok: true; metrics: DashboardMetrics }> {
-  return requestJson('/api/dashboard/metrics')
+export function postDemoLead(payload: DemoLeadPayload): Promise<ApiOkResponse> {
+  return requestJson('/api/leads/demo', { body: payload, auth: false })
+}
+
+export function postContactLead(payload: ContactLeadPayload): Promise<ApiOkResponse> {
+  return requestJson('/api/leads/contact', { body: payload, auth: false })
+}
+
+export function postChatLog(payload: ChatLogPayload): Promise<ApiOkResponse> {
+  return requestJson('/api/chat/log', { body: payload, auth: false })
+}
+
+export function getDashboardSummary(): Promise<{ ok: true; summary: DashboardSummary; recent_sessions: unknown[]; plan: Plan; subscription: Subscription }> {
+  return requestJson('/api/dashboard/summary')
+}
+
+export function getDashboardPlan(): Promise<{ ok: true; plan: Plan; subscription: Subscription }> {
+  return requestJson('/api/dashboard/plan')
+}
+
+export function postDashboardProfile(payload: {
+  business_name: string
+  website_url?: string | null
+}): Promise<{ ok: true; client: AuthClient }> {
+  return requestJson('/api/dashboard/profile', { body: payload })
+}
+
+export function getDashboardChatbots(): Promise<{ ok: true; chatbots: DashboardChatbot[] }> {
+  return requestJson('/api/dashboard/chatbots')
+}
+
+export function postDashboardChatbot(payload: {
+  name: string
+  website_url?: string | null
+  allowed_domains?: string[]
+  is_active?: boolean
+}): Promise<{ ok: true; chatbot: DashboardChatbot }> {
+  return requestJson('/api/dashboard/chatbots', { body: payload })
+}
+
+export function patchDashboardChatbot(
+  chatbotId: string,
+  payload: {
+    name?: string
+    website_url?: string | null
+    allowed_domains?: string[]
+    is_active?: boolean
+  },
+): Promise<{ ok: true; chatbot: DashboardChatbot }> {
+  return requestJson(`/api/dashboard/chatbots/${encodeURIComponent(chatbotId)}`, {
+    method: 'PATCH',
+    body: payload,
+  })
+}
+
+export function deleteDashboardChatbot(chatbotId: string): Promise<ApiOkResponse> {
+  return requestJson(`/api/dashboard/chatbots/${encodeURIComponent(chatbotId)}`, {
+    method: 'DELETE',
+  })
+}
+
+export function getDashboardEmbed(chatbotId: string): Promise<{ ok: true; snippet: string; chatbot: Pick<DashboardChatbot, 'id' | 'name' | 'widget_public_key'> }> {
+  return requestJson(`/api/dashboard/embed/${encodeURIComponent(chatbotId)}`)
+}
+
+export function getDashboardKnowledge(): Promise<{ ok: true; knowledge: DashboardKnowledge }> {
+  return requestJson('/api/dashboard/knowledge')
+}
+
+export function postDashboardKnowledge(payload: {
+  services_text?: string | null
+  pricing_text?: string | null
+  faqs_json?: unknown[]
+  hours_text?: string | null
+  contact_text?: string | null
+  knowledge_base_text?: string | null
+}): Promise<{ ok: true; knowledge: DashboardKnowledge }> {
+  return requestJson('/api/dashboard/knowledge', { body: payload })
+}
+
+export function getDashboardTickets(): Promise<{ ok: true; tickets: DashboardTicket[] }> {
+  return requestJson('/api/dashboard/tickets')
+}
+
+export function postDashboardTicket(payload: {
+  subject: string
+  message: string
+}): Promise<{ ok: true; ticket: DashboardTicket }> {
+  return requestJson('/api/dashboard/tickets', { body: payload })
+}
+
+export function patchDashboardTicket(ticketId: string, payload: {
+  status: 'open' | 'closed'
+}): Promise<{ ok: true; ticket: DashboardTicket }> {
+  return requestJson(`/api/dashboard/tickets/${encodeURIComponent(ticketId)}`, {
+    method: 'PATCH',
+    body: payload,
+  })
+}
+
+export function getDashboardQuotes(): Promise<{ ok: true; quotes: DashboardQuote[] }> {
+  return requestJson('/api/dashboard/quotes')
+}
+
+export function postDashboardQuote(payload: {
+  requested_plan?: 'starter' | 'pro' | 'business'
+  requested_chatbots?: number
+  requested_unlimited_messages?: boolean
+  notes: string
+}): Promise<{ ok: true; quote: DashboardQuote }> {
+  return requestJson('/api/dashboard/quotes', { body: payload })
 }
 
 export function getDashboardLeads(params?: {
@@ -391,30 +548,106 @@ export function getDashboardLeads(params?: {
   return requestJson(`/api/dashboard/leads${suffix}`)
 }
 
-export function patchDashboardLeadStatus(
-  leadId: string,
-  status: string,
-): Promise<{ ok: true; lead: DashboardLead }> {
+export function patchDashboardLeadStatus(leadId: string, status: string): Promise<{ ok: true; lead: DashboardLead }> {
   return requestJson(`/api/dashboard/leads/${encodeURIComponent(leadId)}`, {
     method: 'PATCH',
     body: { status },
   })
 }
 
-export function getDashboardKnowledge(): Promise<{ ok: true; knowledge: DashboardKnowledge }> {
-  return requestJson('/api/dashboard/knowledge')
+export function getWidgetConfig(key: string): Promise<{ ok: true; config: { chatbot_id: string; widget_public_key: string; business_name: string; greeting: string; allowed_domains: string[] } }> {
+  return requestJson(`/api/widget/config?key=${encodeURIComponent(key)}`, { auth: false })
 }
 
-export function postDashboardKnowledge(payload: {
-  services_text?: string | null
-  pricing_text?: string | null
-  faqs_json?: unknown[]
-  hours_text?: string | null
-  contact_text?: string | null
-}): Promise<{ ok: true; knowledge: DashboardKnowledge }> {
-  return requestJson('/api/dashboard/knowledge', {
+export function getAdminOverview(): Promise<{ ok: true; overview: AdminOverview }> {
+  return requestJson('/api/admin/overview')
+}
+
+export function getAdminMessages(params?: {
+  limit?: number
+  offset?: number
+  user_id?: string
+  chatbot_id?: string
+  from?: string
+  to?: string
+}): Promise<{ ok: true; messages: Array<Record<string, unknown>>; pagination: { limit: number; offset: number; total: number } }> {
+  const query = new URLSearchParams()
+  if (params?.limit !== undefined) query.set('limit', String(params.limit))
+  if (params?.offset !== undefined) query.set('offset', String(params.offset))
+  if (params?.user_id) query.set('user_id', params.user_id)
+  if (params?.chatbot_id) query.set('chatbot_id', params.chatbot_id)
+  if (params?.from) query.set('from', params.from)
+  if (params?.to) query.set('to', params.to)
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return requestJson(`/api/admin/messages${suffix}`)
+}
+
+export function getAdminMessagesExportUrl(params?: {
+  user_id?: string
+  chatbot_id?: string
+  from?: string
+  to?: string
+}): string {
+  const query = new URLSearchParams()
+  if (params?.user_id) query.set('user_id', params.user_id)
+  if (params?.chatbot_id) query.set('chatbot_id', params.chatbot_id)
+  if (params?.from) query.set('from', params.from)
+  if (params?.to) query.set('to', params.to)
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return `${resolveApiUrl('/api/admin/messages/export')}${suffix}`
+}
+
+export function getAdminTickets(): Promise<{ ok: true; tickets: DashboardTicket[] }> {
+  return requestJson('/api/admin/tickets')
+}
+
+export function patchAdminTicket(ticketId: string, payload: {
+  status?: 'open' | 'closed'
+  admin_response?: string
+}): Promise<{ ok: true; ticket: DashboardTicket }> {
+  return requestJson(`/api/admin/tickets/${encodeURIComponent(ticketId)}`, {
+    method: 'PATCH',
     body: payload,
   })
+}
+
+export function getAdminQuotes(): Promise<{ ok: true; quotes: DashboardQuote[] }> {
+  return requestJson('/api/admin/quotes')
+}
+
+export function patchAdminQuote(quoteId: string, payload: {
+  status?: 'pending' | 'responded' | 'closed' | 'approved'
+  admin_response?: string
+  approve_plan?: 'free' | 'starter' | 'pro' | 'business'
+}): Promise<{ ok: true; quote: DashboardQuote }> {
+  return requestJson(`/api/admin/quotes/${encodeURIComponent(quoteId)}`, {
+    method: 'PATCH',
+    body: payload,
+  })
+}
+
+export function postAdminSetPlan(userId: string, payload: {
+  plan_code: 'free' | 'starter' | 'pro' | 'business'
+}): Promise<{ ok: true; subscription: Subscription }> {
+  return requestJson(`/api/admin/subscriptions/${encodeURIComponent(userId)}/set-plan`, {
+    method: 'POST',
+    body: payload,
+  })
+}
+
+export function postAdminResetPeriods(): Promise<{ ok: true; reset_count: number }> {
+  return requestJson('/api/admin/maintenance/reset-periods', {
+    method: 'POST',
+    body: {},
+  })
+}
+
+export function getAdminImpersonate(userId: string): Promise<{
+  ok: true
+  user: { id: string; email: string; role: string } | null
+  client: { id: string; business_name: string; website_url: string | null; plan: string } | null
+}> {
+  return requestJson(`/api/admin/impersonate/${encodeURIComponent(userId)}`)
 }
 
 export function verifyAccount(params: { token: string }): Promise<ApiOkResponse> {

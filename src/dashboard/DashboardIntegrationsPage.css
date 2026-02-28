@@ -1,0 +1,8 @@
+﻿.dashboard-integrations .integration-card,
+.dashboard-integrations .integrations-create {
+  box-shadow: 0 12px 30px rgb(2 6 23 / 0.2);
+}
+
+.dashboard-integrations .integration-snippet {
+  white-space: pre-wrap;
+}

@@ -16,7 +16,7 @@ type NavbarProps = {
 function AuthActions() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { loading, user, logout } = useAuth();
+  const { loading, user, logout, isAdmin } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -145,6 +145,28 @@ function AuthActions() {
               </svg>
               Dashboard
             </Link>
+            {isAdmin ? (
+              <Link
+                to="/admin"
+                role="menuitem"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/[0.06] hover:text-white transition-colors"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 3l8 4v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V7z" />
+                </svg>
+                Admin
+              </Link>
+            ) : null}
             <button
               type="button"
               role="menuitem"

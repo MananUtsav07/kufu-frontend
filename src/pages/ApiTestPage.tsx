@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 
 import {
+  getDashboardChatbots,
   getDashboardKnowledge,
   getDashboardLeads,
-  getDashboardMetrics,
+  getDashboardSummary,
   getHealth,
   getMe,
   patchDashboardLeadStatus,
@@ -65,7 +66,6 @@ export function ApiTestPage() {
 
     let tokenFromLogin = ''
     let resolvedVerifyToken = manualToken.trim()
-    let verificationReady = false
 
     try {
       const health = await getHealth()
@@ -83,9 +83,8 @@ export function ApiTestPage() {
       })
       pushResult({ name: 'POST /api/auth/register', status: 'pass', payload: registerResponse })
 
-      const maybeToken = (registerResponse as { token?: unknown }).token
-      if (typeof maybeToken === 'string' && maybeToken.trim()) {
-        resolvedVerifyToken = maybeToken.trim()
+      if (typeof registerResponse.devToken === 'string' && registerResponse.devToken.trim()) {
+        resolvedVerifyToken = registerResponse.devToken.trim()
         setManualToken(resolvedVerifyToken)
       }
     } catch (error) {
@@ -94,23 +93,19 @@ export function ApiTestPage() {
       return
     }
 
-    const tokenToVerify = resolvedVerifyToken
-    if (!tokenToVerify) {
+    if (!resolvedVerifyToken) {
       pushResult({
         name: 'POST /api/auth/verify-email',
         status: 'skipped',
-        payload: 'Token not returned by backend. Paste token from email/log, then run again.',
+        payload: 'Token not returned by backend. Paste token from email/log and run again.',
       })
-      setNote(
-        'Verification token is required to continue. Paste it in the field and click "Run API Test Suite" again.',
-      )
+      setNote('Verification token is required to continue. Paste it in the field and run again.')
       setWorking(false)
       return
     }
 
     try {
-      const verifyResponse = await postVerifyEmail({ token: tokenToVerify })
-      verificationReady = true
+      const verifyResponse = await postVerifyEmail({ token: resolvedVerifyToken })
       pushResult({ name: 'POST /api/auth/verify-email', status: 'pass', payload: verifyResponse })
     } catch (error) {
       pushResult({ name: 'POST /api/auth/verify-email', status: 'fail', payload: error })
@@ -118,16 +113,8 @@ export function ApiTestPage() {
       return
     }
 
-    if (!verificationReady) {
-      setWorking(false)
-      return
-    }
-
     try {
-      const loginResponse = await postLogin({
-        email,
-        password,
-      })
+      const loginResponse = await postLogin({ email, password })
       tokenFromLogin = loginResponse.token
       setToken(loginResponse.token)
       pushResult({ name: 'POST /api/auth/login', status: 'pass', payload: loginResponse })
@@ -150,19 +137,22 @@ export function ApiTestPage() {
     }
 
     try {
-      const metricsResponse = await getDashboardMetrics()
-      pushResult({ name: 'GET /api/dashboard/metrics', status: 'pass', payload: metricsResponse })
+      const summaryResponse = await getDashboardSummary()
+      pushResult({ name: 'GET /api/dashboard/summary', status: 'pass', payload: summaryResponse })
     } catch (error) {
-      pushResult({ name: 'GET /api/dashboard/metrics', status: 'fail', payload: error })
+      pushResult({ name: 'GET /api/dashboard/summary', status: 'fail', payload: error })
+    }
+
+    try {
+      const chatbotsResponse = await getDashboardChatbots()
+      pushResult({ name: 'GET /api/dashboard/chatbots', status: 'pass', payload: chatbotsResponse })
+    } catch (error) {
+      pushResult({ name: 'GET /api/dashboard/chatbots', status: 'fail', payload: error })
     }
 
     try {
       const knowledgeResponse = await getDashboardKnowledge()
-      pushResult({
-        name: 'GET /api/dashboard/knowledge',
-        status: 'pass',
-        payload: knowledgeResponse,
-      })
+      pushResult({ name: 'GET /api/dashboard/knowledge', status: 'pass', payload: knowledgeResponse })
     } catch (error) {
       pushResult({ name: 'GET /api/dashboard/knowledge', status: 'fail', payload: error })
     }
@@ -174,12 +164,9 @@ export function ApiTestPage() {
         faqs_json: [{ question: 'Do you offer setup?', answer: 'Yes, onboarding is included.' }],
         hours_text: 'Mon-Sat, 9 AM to 7 PM IST',
         contact_text: 'WhatsApp +91 98765 43210',
+        knowledge_base_text: 'This is a test knowledge update.',
       })
-      pushResult({
-        name: 'POST /api/dashboard/knowledge',
-        status: 'pass',
-        payload: knowledgeUpsertResponse,
-      })
+      pushResult({ name: 'POST /api/dashboard/knowledge', status: 'pass', payload: knowledgeUpsertResponse })
     } catch (error) {
       pushResult({ name: 'POST /api/dashboard/knowledge', status: 'fail', payload: error })
     }
@@ -188,11 +175,7 @@ export function ApiTestPage() {
     try {
       const leadsResponse = await getDashboardLeads({ limit: 20, offset: 0 })
       firstLeadId = leadsResponse.leads[0]?.id ?? null
-      pushResult({
-        name: 'GET /api/dashboard/leads?limit=20&offset=0',
-        status: 'pass',
-        payload: leadsResponse,
-      })
+      pushResult({ name: 'GET /api/dashboard/leads?limit=20&offset=0', status: 'pass', payload: leadsResponse })
     } catch (error) {
       pushResult({ name: 'GET /api/dashboard/leads', status: 'fail', payload: error })
     }
@@ -200,24 +183,12 @@ export function ApiTestPage() {
     if (firstLeadId) {
       try {
         const patchResponse = await patchDashboardLeadStatus(firstLeadId, 'contacted')
-        pushResult({
-          name: `PATCH /api/dashboard/leads/${firstLeadId}`,
-          status: 'pass',
-          payload: patchResponse,
-        })
+        pushResult({ name: `PATCH /api/dashboard/leads/${firstLeadId}`, status: 'pass', payload: patchResponse })
       } catch (error) {
-        pushResult({
-          name: `PATCH /api/dashboard/leads/${firstLeadId}`,
-          status: 'fail',
-          payload: error,
-        })
+        pushResult({ name: `PATCH /api/dashboard/leads/${firstLeadId}`, status: 'fail', payload: error })
       }
     } else {
-      pushResult({
-        name: 'PATCH /api/dashboard/leads/:id',
-        status: 'skipped',
-        payload: 'No leads exist for this client yet.',
-      })
+      pushResult({ name: 'PATCH /api/dashboard/leads/:id', status: 'skipped', payload: 'No leads available.' })
     }
 
     try {
@@ -241,12 +212,10 @@ export function ApiTestPage() {
 
           <div className="mt-5 grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-slate-300">
-                Manual Verification Token
-              </span>
+              <span className="mb-1.5 block text-sm font-medium text-slate-300">Manual Verification Token</span>
               <input
                 className="api-test-input h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                placeholder="Paste token from verification email if register does not return token"
+                placeholder="Paste token from email"
                 type="text"
                 value={manualToken}
                 onChange={(event) => setManualToken(event.target.value)}
@@ -269,27 +238,16 @@ export function ApiTestPage() {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-emerald-300">
-              Pass: {summary.pass}
-            </span>
-            <span className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-red-300">
-              Fail: {summary.fail}
-            </span>
-            <span className="rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-slate-300">
-              Skipped: {summary.skipped}
-            </span>
-            <span className="rounded-full border border-white/20 px-3 py-1 text-slate-200">
-              Total: {summary.total}
-            </span>
+            <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-emerald-300">Pass: {summary.pass}</span>
+            <span className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-red-300">Fail: {summary.fail}</span>
+            <span className="rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-slate-300">Skipped: {summary.skipped}</span>
+            <span className="rounded-full border border-white/20 px-3 py-1 text-slate-200">Total: {summary.total}</span>
           </div>
         </div>
 
         <div className="mt-6 space-y-3">
           {results.map((result, index) => (
-            <div
-              key={`${result.name}-${index}`}
-              className="api-test-card rounded-xl border border-white/10 bg-slate-900/70 p-4"
-            >
+            <div key={`${result.name}-${index}`} className="api-test-card rounded-xl border border-white/10 bg-slate-900/70 p-4">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="text-sm font-semibold text-white">{result.name}</p>
                 <span

@@ -22,11 +22,13 @@ export function CreateAccountPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [devToken, setDevToken] = useState<string | null>(null)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
     setSuccess(null)
+    setDevToken(null)
 
     const normalizedEmail = email.trim().toLowerCase()
     if (!emailPattern.test(normalizedEmail)) {
@@ -46,7 +48,7 @@ export function CreateAccountPage() {
 
     setSubmitting(true)
     try {
-      await register({
+      const response = await register({
         email: normalizedEmail,
         password,
         businessName: businessName.trim() || undefined,
@@ -54,6 +56,9 @@ export function CreateAccountPage() {
       })
 
       setSuccess('Account created. Check your email for verification token or link.')
+      if (response.devToken) {
+        setDevToken(response.devToken)
+      }
       setPassword('')
       setConfirmPassword('')
     } catch (submitError) {
@@ -184,6 +189,11 @@ export function CreateAccountPage() {
             {success ? (
               <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-300">
                 {success}
+                {devToken ? (
+                  <p className="mt-2 break-all text-xs text-emerald-200">
+                    Dev verification token: <span className="font-mono">{devToken}</span>
+                  </p>
+                ) : null}
               </div>
             ) : null}
           </form>

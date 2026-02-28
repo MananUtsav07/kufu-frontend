@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 
 import { ApiError, getDashboardKnowledge, postDashboardKnowledge } from '../lib/api'
 import './DashboardKnowledgePage.css'
@@ -33,6 +33,7 @@ export function DashboardKnowledgePage() {
   const [pricingText, setPricingText] = useState('')
   const [hoursText, setHoursText] = useState('')
   const [contactText, setContactText] = useState('')
+  const [knowledgeBaseText, setKnowledgeBaseText] = useState('')
   const [faqs, setFaqs] = useState<FaqItem[]>([])
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export function DashboardKnowledgePage() {
         setPricingText(response.knowledge.pricing_text ?? '')
         setHoursText(response.knowledge.hours_text ?? '')
         setContactText(response.knowledge.contact_text ?? '')
+        setKnowledgeBaseText(response.knowledge.knowledge_base_text ?? '')
         setFaqs(parseFaqItems(response.knowledge.faqs_json ?? []))
       } catch (loadError) {
         if (!mounted) return
@@ -89,6 +91,7 @@ export function DashboardKnowledgePage() {
         pricing_text: pricingText.trim() || null,
         hours_text: hoursText.trim() || null,
         contact_text: contactText.trim() || null,
+        knowledge_base_text: knowledgeBaseText.trim() || null,
         faqs_json: faqs
           .map((faq) => ({
             question: faq.question.trim(),
@@ -109,7 +112,7 @@ export function DashboardKnowledgePage() {
       <div>
         <h1 className="font-display text-2xl font-black text-white sm:text-3xl">Knowledge Base</h1>
         <p className="text-sm text-slate-400">
-          Content here is used by Kufu chat responses for your client workspace.
+          This content is injected into chatbot instructions for your tenant.
         </p>
       </div>
 
@@ -127,6 +130,17 @@ export function DashboardKnowledgePage() {
 
       <section className="knowledge-card rounded-2xl border border-white/10 bg-slate-900/70 p-4 sm:p-5">
         <div className="grid gap-4">
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-semibold text-slate-200">Knowledge Base Text</span>
+            <textarea
+              className="knowledge-input min-h-[140px] w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+              disabled={loading}
+              placeholder="Primary tenant knowledge used in system prompt."
+              value={knowledgeBaseText}
+              onChange={(event) => setKnowledgeBaseText(event.target.value)}
+            />
+          </label>
+
           <label className="block">
             <span className="mb-1.5 block text-sm font-semibold text-slate-200">Services Text</span>
             <textarea
@@ -191,10 +205,7 @@ export function DashboardKnowledgePage() {
             <p className="text-sm text-slate-400">No FAQ items yet.</p>
           ) : (
             faqs.map((faq, index) => (
-              <div
-                key={`faq-${index}`}
-                className="rounded-xl border border-white/10 bg-white/[0.03] p-3"
-              >
+              <div key={`faq-${index}`} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
                 <label className="block">
                   <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">
                     Question

@@ -28,6 +28,7 @@ export function DashboardIntegrationsPage() {
   const [ragStatusByRun, setRagStatusByRun] = useState<Record<string, RagIngestionRun>>({})
   const [ragActionBusy, setRagActionBusy] = useState<Record<string, boolean>>({})
   const [ragMaxPages, setRagMaxPages] = useState(60)
+  const [ragUrlsText, setRagUrlsText] = useState('')
 
   const loadChatbots = async () => {
     setLoading(true)
@@ -161,10 +162,16 @@ export function DashboardIntegrationsPage() {
 
     setRagActionBusy((current) => ({ ...current, [chatbot.id]: true }))
     try {
+      const urls = ragUrlsText
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0)
+
       const payload = {
         chatbotId: chatbot.id,
         websiteUrl,
         maxPages: ragMaxPages,
+        urls,
       }
 
       const response =
@@ -265,6 +272,21 @@ export function DashboardIntegrationsPage() {
             value={ragMaxPages}
             onChange={(event) => setRagMaxPages(Number(event.target.value || 60))}
           />
+        </div>
+        <div className="mt-3 space-y-2">
+          <label className="text-xs text-slate-400" htmlFor="rag-urls-input">
+            Optional URLs to ingest directly (one per line, public pages only)
+          </label>
+          <textarea
+            className="min-h-[90px] w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-slate-200"
+            id="rag-urls-input"
+            placeholder={'https://example.com/about\nhttps://example.com/services'}
+            value={ragUrlsText}
+            onChange={(event) => setRagUrlsText(event.target.value)}
+          />
+          <p className="text-[11px] text-slate-500">
+            For private/dashboard pages that require login, add content in Knowledge Base instead.
+          </p>
         </div>
       </form>
 

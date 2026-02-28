@@ -511,6 +511,7 @@ export function postRagIngestStart(payload: {
   chatbotId: string
   websiteUrl: string
   maxPages?: number
+  urls?: string[]
 }): Promise<{ ok: true; runId: string; status: 'running' }> {
   return requestJson('/api/rag/ingest/start', { body: payload })
 }
@@ -519,6 +520,7 @@ export function postRagIngestResync(payload: {
   chatbotId: string
   websiteUrl?: string
   maxPages?: number
+  urls?: string[]
 }): Promise<{ ok: true; runId: string; status: 'running' }> {
   return requestJson('/api/rag/ingest/resync', { body: payload })
 }

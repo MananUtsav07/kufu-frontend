@@ -20,7 +20,6 @@ import { DashboardProfilePage } from "./dashboard/DashboardProfilePage";
 import { DashboardSupportPage } from "./dashboard/DashboardSupportPage";
 import { DashboardUpgradePlanPage } from "./dashboard/DashboardUpgradePlanPage";
 import { ProtectedRoute } from "./lib/protected-route";
-import { ApiTestPage } from "./pages/ApiTestPage";
 import { CreateAccountPage } from "./pages/CreateAccountPage";
 import { DemoPage } from "./pages/DemoPage";
 import { HomePage } from "./pages/HomePage";
@@ -111,8 +110,6 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/create-account" element={<CreateAccountPage />} />
         <Route path="/verify" element={<VerifyEmailPage />} />
-
-        <Route path="/dev/api-test" element={<ApiTestPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardLayout />}>

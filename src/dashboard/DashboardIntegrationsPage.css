@@ -10,3 +10,7 @@
 .dashboard-integrations .rag-status-box {
   box-shadow: inset 0 0 0 1px rgb(99 102 241 / 0.2);
 }
+
+.dashboard-integrations .integration-logo-shell {
+  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.08);
+}

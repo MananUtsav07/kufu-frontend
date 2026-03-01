@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react'
 
-import { ApiError, getDashboardChatbots, getDashboardSummary, getMe } from '../lib/api'
+import { ApiError, getDashboardChatbots, getDashboardKbFiles, getDashboardSummary, getMe } from '../lib/api'
 import './DashboardDevTestPage.css'
 
 type TestResult = {
@@ -39,6 +39,11 @@ export function DashboardDevTestPage() {
     try {
       const chatbots = await getDashboardChatbots()
       push({ name: 'GET /api/dashboard/chatbots', status: 'pass', payload: chatbots })
+
+      if (chatbots.chatbots.length > 0) {
+        const kbFiles = await getDashboardKbFiles(chatbots.chatbots[0].id)
+        push({ name: 'GET /api/dashboard/chatbots/:id/kb-files', status: 'pass', payload: kbFiles })
+      }
     } catch (error) {
       const message = error instanceof ApiError ? error.message : error
       push({ name: 'GET /api/dashboard/chatbots', status: 'fail', payload: message })

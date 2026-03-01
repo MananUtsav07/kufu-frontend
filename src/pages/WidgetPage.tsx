@@ -25,6 +25,7 @@ export function WidgetPage() {
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const [businessName, setBusinessName] = useState('Kufu')
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [messages, setMessages] = useState<WidgetMessage[]>([])
 
   const sessionId = useMemo(() => `widget-${Date.now()}`, [])
@@ -48,6 +49,7 @@ export function WidgetPage() {
         }
 
         setBusinessName(response.config.business_name)
+        setLogoUrl(response.config.logo_url ?? null)
         setMessages([{ id: createId(), role: 'assistant', content: response.config.greeting }])
       } catch (loadError) {
         if (!mounted) {
@@ -129,9 +131,18 @@ export function WidgetPage() {
   return (
     <div className="widget-page flex h-screen flex-col bg-slate-950 text-slate-100">
       <header className="widget-header flex items-center justify-between border-b border-white/10 px-4 py-3">
-        <div>
-          <p className="text-sm font-semibold text-white">{businessName} Assistant</p>
-          <p className="text-xs text-slate-400">Powered by Kufu</p>
+        <div className="flex items-center gap-2">
+          <div className="widget-logo-shell flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-slate-900">
+            {logoUrl ? (
+              <img alt={`${businessName} logo`} className="h-8 w-8 object-contain" src={logoUrl} />
+            ) : (
+              <span className="text-xs font-semibold text-indigo-200">AI</span>
+            )}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-white">{businessName} Assistant</p>
+            <p className="text-xs text-slate-400">Powered by Kufu</p>
+          </div>
         </div>
         <button
           className="rounded-lg border border-white/10 px-2 py-1 text-xs text-slate-300 transition-colors hover:bg-white/5"

@@ -1,13 +1,17 @@
-import { type FormEvent, useEffect, useState } from 'react'
+import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from 'react'
 
+import { useAuth } from '../lib/auth-context'
 import {
   ApiError,
   deleteDashboardChatbot,
+  deleteDashboardChatbotLogo,
+  getDashboardChatbotLogo,
   getDashboardChatbots,
   getDashboardEmbed,
   getRagIngestStatus,
   patchDashboardChatbot,
   postDashboardChatbot,
+  postDashboardChatbotLogo,
   postRagIngestCancel,
   postRagIngestResync,
   postRagIngestStart,
@@ -16,7 +20,19 @@ import {
 } from '../lib/api'
 import './DashboardIntegrationsPage.css'
 
+const STARTER_PLUS_PLANS = new Set(['starter', 'pro', 'business'])
+
 export function DashboardIntegrationsPage() {
+  const { plan, isAdmin } = useAuth()
+  const canUploadAssets = useMemo(() => {
+    if (isAdmin) {
+      return true
+    }
+
+    const planCode = typeof plan?.code === 'string' ? plan.code.toLowerCase() : ''
+    return STARTER_PLUS_PLANS.has(planCode)
+  }, [isAdmin, plan?.code])
+
   const [chatbots, setChatbots] = useState<DashboardChatbot[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -24,11 +40,37 @@ export function DashboardIntegrationsPage() {
   const [newWebsiteUrl, setNewWebsiteUrl] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [snippetMap, setSnippetMap] = useState<Record<string, string>>({})
+  const [logoUrlByChatbot, setLogoUrlByChatbot] = useState<Record<string, string | null>>({})
+  const [logoBusyByChatbot, setLogoBusyByChatbot] = useState<Record<string, boolean>>({})
   const [ragRunByChatbot, setRagRunByChatbot] = useState<Record<string, string>>({})
   const [ragStatusByRun, setRagStatusByRun] = useState<Record<string, RagIngestionRun>>({})
   const [ragActionBusy, setRagActionBusy] = useState<Record<string, boolean>>({})
   const [ragMaxPages, setRagMaxPages] = useState(60)
   const [ragUrlsText, setRagUrlsText] = useState('')
+
+  const loadChatbotLogos = async (items: DashboardChatbot[]) => {
+    if (items.length === 0) {
+      setLogoUrlByChatbot({})
+      return
+    }
+
+    const logoEntries = await Promise.all(
+      items.map(async (chatbot) => {
+        if (!chatbot.logo_path) {
+          return [chatbot.id, null] as const
+        }
+
+        try {
+          const logoResponse = await getDashboardChatbotLogo(chatbot.id)
+          return [chatbot.id, logoResponse.logoUrl] as const
+        } catch {
+          return [chatbot.id, null] as const
+        }
+      }),
+    )
+
+    setLogoUrlByChatbot(Object.fromEntries(logoEntries))
+  }
 
   const loadChatbots = async () => {
     setLoading(true)
@@ -36,6 +78,7 @@ export function DashboardIntegrationsPage() {
     try {
       const response = await getDashboardChatbots()
       setChatbots(response.chatbots)
+      await loadChatbotLogos(response.chatbots)
     } catch (loadError) {
       setError(loadError instanceof ApiError ? loadError.message : 'Failed to load chatbots.')
     } finally {
@@ -66,6 +109,7 @@ export function DashboardIntegrationsPage() {
             if (!isActive) {
               return
             }
+
             setRagStatusByRun((current) => ({
               ...current,
               [runId]: response.run,
@@ -133,6 +177,11 @@ export function DashboardIntegrationsPage() {
     try {
       await deleteDashboardChatbot(chatbotId)
       setChatbots((current) => current.filter((item) => item.id !== chatbotId))
+      setLogoUrlByChatbot((current) => {
+        const next = { ...current }
+        delete next[chatbotId]
+        return next
+      })
     } catch (deleteError) {
       setError(deleteError instanceof ApiError ? deleteError.message : 'Failed to delete chatbot.')
     }
@@ -150,6 +199,38 @@ export function DashboardIntegrationsPage() {
 
   const copySnippet = async (snippet: string) => {
     await navigator.clipboard.writeText(snippet)
+  }
+
+  const handleLogoUploadChange = async (chatbotId: string, event: ChangeEvent<HTMLInputElement>) => {
+    const targetFile = event.target.files?.[0]
+    event.target.value = ''
+    if (!targetFile) {
+      return
+    }
+
+    setError(null)
+    setLogoBusyByChatbot((current) => ({ ...current, [chatbotId]: true }))
+    try {
+      const response = await postDashboardChatbotLogo(chatbotId, targetFile)
+      setLogoUrlByChatbot((current) => ({ ...current, [chatbotId]: response.logoUrl }))
+    } catch (uploadError) {
+      setError(uploadError instanceof ApiError ? uploadError.message : 'Failed to upload chatbot logo.')
+    } finally {
+      setLogoBusyByChatbot((current) => ({ ...current, [chatbotId]: false }))
+    }
+  }
+
+  const handleRemoveLogo = async (chatbotId: string) => {
+    setError(null)
+    setLogoBusyByChatbot((current) => ({ ...current, [chatbotId]: true }))
+    try {
+      await deleteDashboardChatbotLogo(chatbotId)
+      setLogoUrlByChatbot((current) => ({ ...current, [chatbotId]: null }))
+    } catch (removeError) {
+      setError(removeError instanceof ApiError ? removeError.message : 'Failed to remove chatbot logo.')
+    } finally {
+      setLogoBusyByChatbot((current) => ({ ...current, [chatbotId]: false }))
+    }
   }
 
   const triggerIngestion = async (chatbot: DashboardChatbot, mode: 'start' | 'resync') => {
@@ -227,8 +308,14 @@ export function DashboardIntegrationsPage() {
     <div className="dashboard-integrations space-y-5">
       <div>
         <h1 className="font-display text-2xl font-black text-white sm:text-3xl">Integrations</h1>
-        <p className="text-sm text-slate-400">Create chatbots and copy installation snippets for websites.</p>
+        <p className="text-sm text-slate-400">Create chatbots, manage logos, and copy installation snippets.</p>
       </div>
+
+      {!canUploadAssets ? (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          Upgrade to Starter or above to upload chatbot logos.
+        </div>
+      ) : null}
 
       {error ? (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
@@ -299,6 +386,10 @@ export function DashboardIntegrationsPage() {
           chatbots.map((chatbot) => {
             const runId = ragRunByChatbot[chatbot.id]
             const run = runId ? ragStatusByRun[runId] : null
+            const logoUrl = logoUrlByChatbot[chatbot.id] ?? null
+            const logoBusy = Boolean(logoBusyByChatbot[chatbot.id])
+            const uploadInputId = `chatbot-logo-${chatbot.id}`
+
             return (
               <article key={chatbot.id} className="integration-card rounded-2xl border border-white/10 bg-slate-900/70 p-4">
                 {run ? (
@@ -312,10 +403,19 @@ export function DashboardIntegrationsPage() {
                 ) : null}
 
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-semibold text-white">{chatbot.name}</h3>
-                    <p className="text-xs text-slate-400">{chatbot.website_url || 'No website URL configured'}</p>
-                    <p className="mt-1 text-xs text-slate-500">Public key: {chatbot.widget_public_key}</p>
+                  <div className="flex items-start gap-3">
+                    <div className="integration-logo-shell flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-slate-950/80">
+                      {logoUrl ? (
+                        <img alt={`${chatbot.name} logo`} className="h-11 w-11 object-contain" src={logoUrl} />
+                      ) : (
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">No Logo</span>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-base font-semibold text-white">{chatbot.name}</h3>
+                      <p className="text-xs text-slate-400">{chatbot.website_url || 'No website URL configured'}</p>
+                      <p className="mt-1 text-xs text-slate-500">Public key: {chatbot.widget_public_key}</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -336,6 +436,42 @@ export function DashboardIntegrationsPage() {
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {canUploadAssets ? (
+                    <>
+                      <input
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                        className="hidden"
+                        id={uploadInputId}
+                        type="file"
+                        onChange={(event) => {
+                          void handleLogoUploadChange(chatbot.id, event)
+                        }}
+                      />
+                      <label
+                        className="cursor-pointer rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold text-indigo-200 transition-colors hover:bg-indigo-500/20"
+                        htmlFor={uploadInputId}
+                      >
+                        {logoUrl ? 'Replace Logo' : 'Upload Logo'}
+                      </label>
+                      {logoUrl ? (
+                        <button
+                          className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-200 transition-colors hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-70"
+                          disabled={logoBusy}
+                          type="button"
+                          onClick={() => {
+                            void handleRemoveLogo(chatbot.id)
+                          }}
+                        >
+                          {logoBusy ? 'Removing...' : 'Remove Logo'}
+                        </button>
+                      ) : null}
+                    </>
+                  ) : (
+                    <span className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200">
+                      Upgrade to upload logo
+                    </span>
+                  )}
+
                   <button
                     className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
                     disabled={Boolean(ragActionBusy[chatbot.id])}
@@ -393,3 +529,4 @@ export function DashboardIntegrationsPage() {
     </div>
   )
 }
+

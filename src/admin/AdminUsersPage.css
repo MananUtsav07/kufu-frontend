@@ -1,0 +1,8 @@
+.admin-users-page .admin-users-table {
+  min-width: 960px;
+}
+
+.admin-users-page .admin-users-table tbody tr:hover {
+  background: rgb(255 255 255 / 0.02);
+}
+

@@ -189,7 +189,20 @@ export type DashboardChatbot = {
   website_url: string | null
   allowed_domains: string[]
   widget_public_key: string
+  logo_path: string | null
+  logo_updated_at: string | null
   is_active: boolean
+  created_at: string
+}
+
+export type DashboardKbFile = {
+  id: string
+  chatbot_id: string
+  user_id: string
+  filename: string
+  mime_type: string
+  storage_path: string
+  file_size: number
   created_at: string
 }
 
@@ -215,6 +228,16 @@ export type AdminOverview = {
   active_subscriptions_by_plan: Record<string, number>
   total_messages_last_24h: number
   total_messages_last_7d: number
+}
+
+export type AdminUserListItem = {
+  id: string
+  email: string
+  role: 'user' | 'admin'
+  is_verified: boolean
+  created_at: string
+  currentPlanCode: 'free' | 'starter' | 'pro' | 'business' | string
+  messageUsageThisPeriod: number
 }
 
 export class ApiError extends Error {
@@ -293,6 +316,42 @@ async function requestJson<TResponse>(path: string, options: RequestOptions = {}
     const errorPayload = await parseErrorPayload(response)
     throw new ApiError(
       errorPayload?.error ?? errorPayload?.message ?? errorPayload?.reply ?? `Request failed (${response.status})`,
+      response.status,
+      errorPayload,
+    )
+  }
+
+  if (response.status === 204) {
+    return {} as TResponse
+  }
+
+  return (await response.json()) as TResponse
+}
+
+async function requestFormData<TResponse>(path: string, formData: FormData, method: 'POST' | 'PATCH' = 'POST'): Promise<TResponse> {
+  const headers = new Headers()
+  headers.set('Accept', 'application/json')
+
+  if (authToken) {
+    headers.set('Authorization', `Bearer ${authToken}`)
+  }
+
+  let response: Response
+  try {
+    response = await fetch(resolveApiUrl(path), {
+      method,
+      headers,
+      credentials: 'include',
+      body: formData,
+    })
+  } catch (error) {
+    throw new ApiError(error instanceof Error ? error.message : 'Network error', 0, error)
+  }
+
+  if (!response.ok) {
+    const errorPayload = await parseErrorPayload(response)
+    throw new ApiError(
+      errorPayload?.error ?? errorPayload?.message ?? `Request failed (${response.status})`,
       response.status,
       errorPayload,
     )
@@ -503,6 +562,38 @@ export function deleteDashboardChatbot(chatbotId: string): Promise<ApiOkResponse
   })
 }
 
+export function getDashboardChatbotLogo(chatbotId: string): Promise<{ ok: true; logoUrl: string | null }> {
+  return requestJson(`/api/dashboard/chatbots/${encodeURIComponent(chatbotId)}/logo`)
+}
+
+export function postDashboardChatbotLogo(chatbotId: string, file: File): Promise<{ ok: true; logoUrl: string | null }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  return requestFormData(`/api/dashboard/chatbots/${encodeURIComponent(chatbotId)}/logo`, formData, 'POST')
+}
+
+export function deleteDashboardChatbotLogo(chatbotId: string): Promise<ApiOkResponse> {
+  return requestJson(`/api/dashboard/chatbots/${encodeURIComponent(chatbotId)}/logo`, {
+    method: 'DELETE',
+  })
+}
+
+export function getDashboardKbFiles(chatbotId: string): Promise<{ ok: true; files: DashboardKbFile[] }> {
+  return requestJson(`/api/dashboard/chatbots/${encodeURIComponent(chatbotId)}/kb-files`)
+}
+
+export function postDashboardKbFile(chatbotId: string, file: File): Promise<{ ok: true; file: DashboardKbFile }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  return requestFormData(`/api/dashboard/chatbots/${encodeURIComponent(chatbotId)}/kb-files`, formData, 'POST')
+}
+
+export function deleteDashboardKbFile(fileId: string): Promise<ApiOkResponse> {
+  return requestJson(`/api/dashboard/kb-files/${encodeURIComponent(fileId)}`, {
+    method: 'DELETE',
+  })
+}
+
 export function getDashboardEmbed(chatbotId: string): Promise<{ ok: true; snippet: string; chatbot: Pick<DashboardChatbot, 'id' | 'name' | 'widget_public_key'> }> {
   return requestJson(`/api/dashboard/embed/${encodeURIComponent(chatbotId)}`)
 }
@@ -603,12 +694,25 @@ export function patchDashboardLeadStatus(leadId: string, status: string): Promis
   })
 }
 
-export function getWidgetConfig(key: string): Promise<{ ok: true; config: { chatbot_id: string; widget_public_key: string; business_name: string; greeting: string; allowed_domains: string[] } }> {
+export function getWidgetConfig(key: string): Promise<{ ok: true; config: { chatbot_id: string; widget_public_key: string; business_name: string; greeting: string; logo_url?: string | null; allowed_domains: string[] } }> {
   return requestJson(`/api/widget/config?key=${encodeURIComponent(key)}`, { auth: false })
 }
 
 export function getAdminOverview(): Promise<{ ok: true; overview: AdminOverview }> {
   return requestJson('/api/admin/overview')
+}
+
+export function getAdminUsers(): Promise<{ ok: true; users: AdminUserListItem[] }> {
+  return requestJson('/api/admin/users')
+}
+
+export function postAdminUserPlan(userId: string, payload: {
+  planCode: 'free' | 'starter' | 'pro' | 'business'
+}): Promise<{ ok: true; subscription: Subscription }> {
+  return requestJson(`/api/admin/users/${encodeURIComponent(userId)}/plan`, {
+    method: 'POST',
+    body: payload,
+  })
 }
 
 export function getAdminMessages(params?: {

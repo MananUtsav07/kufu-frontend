@@ -6,6 +6,7 @@ import { AdminMessagesPage } from './admin/AdminMessagesPage'
 import { AdminOverviewPage } from './admin/AdminOverviewPage'
 import { AdminQuotesPage } from './admin/AdminQuotesPage'
 import { AdminTicketsPage } from './admin/AdminTicketsPage'
+import { AdminUsersPage } from './admin/AdminUsersPage'
 import { ScrollToTop } from './components/ScrollToTop'
 import { DashboardCustomQuotePage } from './dashboard/DashboardCustomQuotePage'
 import { DashboardDevTestPage } from './dashboard/DashboardDevTestPage'
@@ -131,6 +132,7 @@ function App() {
         <Route element={<ProtectedRoute requireAdmin />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminOverviewPage />} />
+            <Route path="users" element={<AdminUsersPage />} />
             <Route path="messages" element={<AdminMessagesPage />} />
             <Route path="tickets" element={<AdminTicketsPage />} />
             <Route path="quotes" element={<AdminQuotesPage />} />

@@ -5,6 +5,7 @@ import './AdminLayout.css'
 
 const ADMIN_LINKS = [
   { to: '/admin', label: 'Overview', icon: 'monitoring' },
+  { to: '/admin/users', label: 'Users', icon: 'group' },
   { to: '/admin/messages', label: 'Messages', icon: 'forum' },
   { to: '/admin/tickets', label: 'Tickets', icon: 'support_agent' },
   { to: '/admin/quotes', label: 'Quotes / Upgrades', icon: 'request_quote' },

@@ -87,6 +87,7 @@ type ChatLogMessage = Pick<Message, 'role' | 'content' | 'createdAt'>
 export type DemoLeadPayload = {
   fullName: string
   businessType: string
+  websiteUrl?: string
   phone: string
   email: string
   message?: string

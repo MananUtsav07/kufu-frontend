@@ -53,6 +53,7 @@ export function DemoPage() {
       await postDemoLead({
         fullName: form.fullName.trim(),
         businessType: form.businessName.trim(),
+        websiteUrl: form.websiteUrl.trim() || undefined,
         phone: form.phone.trim(),
         email: form.email.trim(),
         message: form.message.trim(),

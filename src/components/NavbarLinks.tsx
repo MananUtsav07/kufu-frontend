@@ -1,24 +1,22 @@
+import { Link } from "react-router-dom";
+
 type NavbarLinksProps = {
-  className?: string
-  buttonClassName: string
-  onNavigate: (id: string) => void
-  onCaseStudiesNavigate: () => void
-}
+  className?: string;
+  buttonClassName: string;
+  onNavigate: (id: string) => void;
+};
 
 const HOME_NAV_LINKS = [
-  { id: 'home', label: 'Home' },
-  { id: 'services', label: 'Services' },
-  { id: 'pricing', label: 'Pricing' },
-  { id: 'faq', label: 'FAQ' },
-  { id: 'contact', label: 'Contact' },
-  { id: 'case-studies', label: 'Case Studies' },
-] as const
+  { id: "home", label: "Home" },
+  { id: "services", label: "Services" },
+  { id: "pricing", label: "Pricing" },
+  { id: "faq", label: "FAQ" },
+] as const;
 
 export function NavbarLinks({
   className,
   buttonClassName,
   onNavigate,
-  onCaseStudiesNavigate,
 }: NavbarLinksProps) {
   return (
     <div className={className}>
@@ -27,13 +25,15 @@ export function NavbarLinks({
           key={item.id}
           className={buttonClassName}
           type="button"
-          onClick={() =>
-            item.id === 'case-studies' ? onCaseStudiesNavigate() : onNavigate(item.id)
-          }
+          onClick={() => onNavigate(item.id)}
         >
           {item.label}
         </button>
       ))}
+      {/* Contact navigates to /contact page */}
+      <Link to="/contact" className={buttonClassName}>
+        Contact Us
+      </Link>
     </div>
-  )
+  );
 }

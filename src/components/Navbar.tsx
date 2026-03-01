@@ -209,7 +209,10 @@ export function Navbar({ page: _page }: NavbarProps) {
   }, []);
 
   useEffect(() => {
-    setIsMobileMenuOpen(false);
+    const timer = setTimeout(() => {
+      setIsMobileMenuOpen(false);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [location.pathname]);
 
   const handleSectionNavigation = (id: string) => {
@@ -220,22 +223,9 @@ export function Navbar({ page: _page }: NavbarProps) {
     navigate("/", { state: { scrollTo: id } });
   };
 
-  const handleCaseStudiesNavigation = () => {
-    if (location.pathname === "/case-studies") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-    navigate("/case-studies");
-  };
-
   const handleMobileNavigate = (id: string) => {
     setIsMobileMenuOpen(false);
     handleSectionNavigation(id);
-  };
-
-  const handleMobileCaseStudiesNavigate = () => {
-    setIsMobileMenuOpen(false);
-    handleCaseStudiesNavigation();
   };
 
   return (
@@ -270,7 +260,7 @@ export function Navbar({ page: _page }: NavbarProps) {
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className={`sticky top-0 z-50 w-full px-6 lg:px-10 backdrop-blur-xl transition-all duration-300 ${
+        className={`fixed top-0 z-50 w-full px-6 lg:px-10 backdrop-blur-xl transition-all duration-300 ${
           scrolled
             ? "bg-slate-950/90 shadow-[0_4px_24px_rgba(0,0,0,0.4)] border-b border-white/[0.06]"
             : "bg-slate-950/60 border-b border-transparent"
@@ -285,15 +275,11 @@ export function Navbar({ page: _page }: NavbarProps) {
             className="flex items-center gap-2.5 justify-self-start group"
           >
             <motion.div className="flex items-center gap-2.5">
-              <div
-                className="w-8 h-8 rounded-xl grad-bg flex items-center justify-center flex-shrink-0 shadow-[0_2px_12px_rgba(99,102,241,0.35)] group-hover:scale-105 transition-transform"
-              >
+              <div className="w-8 h-8 rounded-xl grad-bg flex items-center justify-center flex-shrink-0 shadow-[0_2px_12px_rgba(99,102,241,0.35)] group-hover:scale-105 transition-transform">
                 <BrandBotIcon size={18} />
               </div>
 
-              <span
-                className="font-display font-extrabold text-[1.1rem] tracking-tight text-slate-100"
-              >
+              <span className="font-display font-extrabold text-[1.1rem] tracking-tight text-slate-100">
                 {brandName}
               </span>
             </motion.div>
@@ -303,7 +289,6 @@ export function Navbar({ page: _page }: NavbarProps) {
           <NavbarLinks
             className="hidden items-center gap-6 md:flex"
             buttonClassName="nav-link bg-transparent p-0 text-sm font-medium text-slate-400 hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-sm whitespace-nowrap"
-            onCaseStudiesNavigate={handleCaseStudiesNavigation}
             onNavigate={handleSectionNavigation}
           />
 
@@ -317,12 +302,28 @@ export function Navbar({ page: _page }: NavbarProps) {
               className="md:hidden w-9 h-9 rounded-xl border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.08] transition-colors flex items-center justify-center"
             >
               {isMobileMenuOpen ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                >
                   <line x1="4" y1="7" x2="20" y2="7" />
                   <line x1="4" y1="12" x2="20" y2="12" />
                   <line x1="4" y1="17" x2="20" y2="17" />
@@ -369,7 +370,6 @@ export function Navbar({ page: _page }: NavbarProps) {
                 <NavbarLinks
                   className="flex flex-col"
                   buttonClassName="nav-link bg-transparent text-left w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-indigo-300 hover:bg-white/[0.05] transition-colors"
-                  onCaseStudiesNavigate={handleMobileCaseStudiesNavigate}
                   onNavigate={handleMobileNavigate}
                 />
                 <div className="mt-2 pt-3 border-t border-white/[0.07] flex flex-col gap-2">

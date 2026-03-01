@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Navbar } from "../components/Navbar";
+import { ApiError, postDemoLead } from "../lib/api";
 import { FooterSection } from "./home/FooterSection";
 
 const fadeUp = (delay = 0) => ({
@@ -30,6 +31,7 @@ const STEPS = [
 export function DemoPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [form, setForm] = useState({
     fullName: "",
     businessName: "",
@@ -45,10 +47,27 @@ export function DemoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setLoading(false);
-    setSubmitted(true);
+    try {
+      await postDemoLead({
+        fullName: form.fullName.trim(),
+        businessType: form.businessName.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim(),
+        message: form.message.trim(),
+      });
+
+      setSubmitted(true);
+    } catch (error) {
+      setSubmitError(
+        error instanceof ApiError
+          ? error.message
+          : "Failed to submit request. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -230,6 +249,12 @@ export function DemoPage() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} noValidate className="space-y-5">
+                  {submitError ? (
+                    <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                      {submitError}
+                    </div>
+                  ) : null}
+
                   <div className="mb-6">
                     <h2 className="font-display font-bold text-white text-xl mb-1">Request a Free Demo</h2>
                     <p className="text-sm text-slate-500">We'll set up a call and show you Kufu live on your website.</p>

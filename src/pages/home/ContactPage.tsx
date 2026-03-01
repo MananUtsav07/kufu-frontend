@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Navbar } from "../../components/Navbar";
+import { ApiError, postContactLead } from "../../lib/api";
 import { FooterSection } from "./FooterSection";
 
 const fadeUp = (delay = 0) => ({
@@ -24,6 +25,7 @@ const TOPICS = [
 export function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -39,10 +41,36 @@ export function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setLoading(false);
-    setSubmitted(true);
+
+    try {
+      const fullNameParts = form.fullName
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+      const firstName = fullNameParts[0] ?? form.fullName.trim();
+      const lastName = fullNameParts.slice(1).join(" ") || "N/A";
+      const combinedMessage = `Topic: ${form.topic}\n\n${form.message}`;
+
+      await postContactLead({
+        firstName,
+        lastName,
+        email: form.email.trim(),
+        message: combinedMessage.trim(),
+      });
+
+      setSubmitted(true);
+    } catch (error) {
+      setSubmitError(
+        error instanceof ApiError
+          ? error.message
+          : "Failed to send message. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -277,6 +305,14 @@ export function ContactPage() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} noValidate className="space-y-5">
+                  {submitError ? (
+                    <div
+                      className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+                    >
+                      {submitError}
+                    </div>
+                  ) : null}
+
                   <div className="mb-6">
                     <h2 className="font-display font-bold text-white text-xl mb-1">
                       Send us a message

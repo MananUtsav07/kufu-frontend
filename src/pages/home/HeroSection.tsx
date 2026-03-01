@@ -25,7 +25,7 @@ export function HeroSection({ onScrollTo }: HeroSectionProps) {
   return (
     <section
       id="home"
-      className="relative isolate overflow-hidden pb-24 pt-12 lg:pb-32 lg:pt-30 px-6 lg:px-10"
+      className="relative isolate overflow-hidden pb-24 pt-30 md:pt-12 lg:pb-32 lg:pt-30 px-6 lg:px-10"
     >
       {/* Rich background atmosphere */}
       <div className="absolute inset-0 -z-10 bg-[#020617]" />

@@ -61,7 +61,7 @@ const plans = [
 
 export function PricingSection({ billingMonthly, onToggleBilling, onScrollTo }: PricingSectionProps) {
   return (
-    <section id="pricing" className="py-28 px-6 lg:px-10 relative overflow-hidden">
+    <section id="pricing" className="px-6 md:py-12 py-6 lg:px-10 relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-indigo-900/10 blur-[100px] pointer-events-none" />
 

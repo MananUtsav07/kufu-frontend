@@ -119,7 +119,7 @@ function FAQItem({
 export function FaqSection() {
   const navigate = useNavigate();
   return (
-    <section id="faq" className="py-28 px-6 lg:px-10 relative overflow-hidden">
+    <section id="faq" className="px-6 md:py-12 py-6 lg:px-10 relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-violet-900/8 blur-[100px] pointer-events-none" />
 

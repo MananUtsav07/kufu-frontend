@@ -6,7 +6,7 @@ export function CtaSection() {
   return (
     <section
       id="contact"
-      className="py-24 px-6 lg:px-10 relative overflow-hidden"
+      className="px-6 md:py-12 py-6 lg:px-10 relative overflow-hidden"
     >
       <div className="max-w-5xl mx-auto">
         <Reveal>

@@ -45,7 +45,7 @@ const steps = [
 
 export function StepsSection() {
   return (
-    <section id="how-it-works" className="py-28 px-6 lg:px-10 relative overflow-hidden">
+    <section id="how-it-works" className="px-6 md:py-12 py-6 lg:px-10 relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-indigo-900/10 blur-[100px] pointer-events-none" />
 

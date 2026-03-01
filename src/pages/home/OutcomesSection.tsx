@@ -53,7 +53,7 @@ const features = [
 
 export function OutcomesSection() {
   return (
-    <section id="services" className="py-28 px-6 lg:px-10 relative overflow-hidden">
+    <section id="services" className="px-6 md:py-12 py-6 lg:px-10 relative overflow-hidden">
       {/* Background */}
       <div className="absolute right-0 top-1/4 w-[500px] h-[500px] rounded-full bg-blue-900/8 blur-[120px] pointer-events-none" />
       <div className="absolute left-0 bottom-1/4 w-[400px] h-[400px] rounded-full bg-violet-900/8 blur-[100px] pointer-events-none" />

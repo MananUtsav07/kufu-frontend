@@ -74,7 +74,7 @@ export function ContactPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col pt-20 overflow-x-hidden bg-[#020617] text-slate-200">
+    <div className="relative flex min-h-screen w-full flex-col pt-10 md:pt-20 overflow-x-hidden bg-[#020617] text-slate-200">
       <style>{`
         input, select, textarea { color-scheme: dark; }
         input::placeholder, textarea::placeholder { color: #475569; }

@@ -74,6 +74,7 @@ function PasswordField({
 export function CreateAccountPage() {
   const { register } = useAuth()
 
+  const [fullName, setFullName] = useState('')
   const [businessName, setBusinessName] = useState('')
   const [websiteUrl, setWebsiteUrl] = useState('')
   const [email, setEmail] = useState('')
@@ -92,7 +93,11 @@ export function CreateAccountPage() {
     setSuccess(null)
     setDevToken(null)
 
+    const normalizedFullName = fullName.trim()
+    const normalizedBusinessName = businessName.trim()
     const normalizedEmail = email.trim().toLowerCase()
+    if (!normalizedFullName) { setError('Full name is required.'); return }
+    if (!normalizedBusinessName) { setError('Business name is required.'); return }
     if (!emailPattern.test(normalizedEmail)) { setError('Enter a valid email address.'); return }
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
     if (confirmPassword !== password) { setError('Passwords do not match.'); return }
@@ -101,7 +106,8 @@ export function CreateAccountPage() {
     try {
       const response = await register({
         email: normalizedEmail, password,
-        businessName: businessName.trim() || undefined,
+        fullName: normalizedFullName,
+        businessName: normalizedBusinessName,
         websiteUrl: websiteUrl.trim() || undefined,
       })
       setSuccess('Account created! Check your email to verify your account.')
@@ -254,16 +260,22 @@ export function CreateAccountPage() {
                 {/* Business info row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <InputField
-                    id="businessName" label="Business Name"
-                    placeholder="Acme Inc." value={businessName}
-                    onChange={setBusinessName} optional
+                    id="fullName" label="Full Name"
+                    placeholder="John Doe" value={fullName}
+                    onChange={setFullName} required
                   />
                   <InputField
-                    id="websiteUrl" label="Website URL" type="url"
-                    placeholder="https://yoursite.com" value={websiteUrl}
-                    onChange={setWebsiteUrl} optional
+                    id="businessName" label="Business Name"
+                    placeholder="Acme Inc." value={businessName}
+                    onChange={setBusinessName} required
                   />
                 </div>
+
+                <InputField
+                  id="websiteUrl" label="Website URL" type="url"
+                  placeholder="https://yoursite.com" value={websiteUrl}
+                  onChange={setWebsiteUrl} optional
+                />
 
                 <InputField
                   id="email" label="Email Address" type="email"

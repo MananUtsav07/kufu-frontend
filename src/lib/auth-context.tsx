@@ -42,7 +42,8 @@ export type SessionClient = {
 type RegisterInput = {
   email: string
   password: string
-  businessName?: string
+  fullName: string
+  businessName: string
   websiteUrl?: string
 }
 
@@ -198,6 +199,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const response = await postRegister({
       email: input.email,
       password: input.password,
+      full_name: input.fullName,
       business_name: input.businessName,
       website_url: input.websiteUrl,
     })
@@ -235,10 +237,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setToken,
       signIn: login,
       signUp: async (email: string, password: string, name?: string) => {
+        const fallbackName = name?.trim() || 'User'
         await register({
           email,
           password,
-          businessName: name,
+          fullName: fallbackName,
+          businessName: fallbackName,
         })
         return { requiresEmailConfirmation: true }
       },

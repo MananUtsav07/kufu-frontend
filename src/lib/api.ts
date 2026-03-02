@@ -69,7 +69,8 @@ export type AuthMeResponse = {
 export type RegisterPayload = {
   email: string
   password: string
-  business_name?: string
+  full_name: string
+  business_name: string
   website_url?: string
 }
 

@@ -10,14 +10,18 @@ import { AdminUsersPage } from "./admin/AdminUsersPage";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { DashboardCustomQuotePage } from "./dashboard/DashboardCustomQuotePage";
 import { DashboardDevTestPage } from "./dashboard/DashboardDevTestPage";
+import { DashboardChatHistoryPage } from "./dashboard/DashboardChatHistoryPage";
 import { DashboardIntegrationsPage } from "./dashboard/DashboardIntegrationsPage";
 import { DashboardKnowledgePage } from "./dashboard/DashboardKnowledgePage";
 import { DashboardLayout } from "./dashboard/DashboardLayout";
 import { DashboardLeadsPage } from "./dashboard/DashboardLeadsPage";
 import { DashboardOverviewPage } from "./dashboard/DashboardOverviewPage";
+import { DashboardAnalyticsPage } from "./dashboard/DashboardAnalyticsPage";
+import { DashboardChatbotSettingsPage } from "./dashboard/DashboardChatbotSettingsPage";
 import { DashboardPlanPage } from "./dashboard/DashboardPlanPage";
 import { DashboardProfilePage } from "./dashboard/DashboardProfilePage";
 import { DashboardSupportPage } from "./dashboard/DashboardSupportPage";
+import { DashboardTestChatPage } from "./dashboard/DashboardTestChatPage";
 import { DashboardUpgradePlanPage } from "./dashboard/DashboardUpgradePlanPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import { CreateAccountPage } from "./pages/CreateAccountPage";
@@ -125,6 +129,10 @@ function App() {
             <Route path="support" element={<DashboardSupportPage />} />
             <Route path="custom-quote" element={<DashboardCustomQuotePage />} />
             <Route path="leads" element={<DashboardLeadsPage />} />
+            <Route path="chat-history" element={<DashboardChatHistoryPage />} />
+            <Route path="analytics" element={<DashboardAnalyticsPage />} />
+            <Route path="chatbot-settings" element={<DashboardChatbotSettingsPage />} />
+            <Route path="test-chat" element={<DashboardTestChatPage />} />
             {import.meta.env.DEV ? (
               <Route path="dev-test" element={<DashboardDevTestPage />} />
             ) : null}

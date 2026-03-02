@@ -207,6 +207,35 @@ export type DashboardKbFile = {
   created_at: string
 }
 
+export type DashboardChatHistoryRow = {
+  id: string
+  chatbot_id: string
+  visitor_id: string
+  user_message: string
+  bot_response: string
+  lead_captured: boolean
+  created_at: string
+}
+
+export type DashboardAnalyticsResponse = {
+  totalChats: number
+  popularQuestions: Array<{
+    question: string
+    count: number
+  }>
+  peakHours: Array<{
+    hour: number
+    count: number
+  }>
+}
+
+export type ChatbotSettings = {
+  chatbot_id: string
+  bot_name: string
+  greeting_message: string
+  primary_color: string
+}
+
 export type RagIngestionRunStatus = 'running' | 'done' | 'failed' | 'canceled'
 
 export type RagIngestionRun = {
@@ -599,6 +628,94 @@ export function getDashboardEmbed(chatbotId: string): Promise<{ ok: true; snippe
   return requestJson(`/api/dashboard/embed/${encodeURIComponent(chatbotId)}`)
 }
 
+export function getDashboardChatHistory(
+  chatbotId: string,
+  params?: {
+    from?: string
+    to?: string
+    leadCaptured?: 'yes' | 'no'
+    limit?: number
+    offset?: number
+  },
+): Promise<{ ok: true; rows: DashboardChatHistoryRow[]; pagination: { limit: number; offset: number; total: number } }> {
+  const query = new URLSearchParams()
+  if (params?.from) query.set('from', params.from)
+  if (params?.to) query.set('to', params.to)
+  if (params?.leadCaptured) query.set('leadCaptured', params.leadCaptured)
+  if (params?.limit !== undefined) query.set('limit', String(params.limit))
+  if (params?.offset !== undefined) query.set('offset', String(params.offset))
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return requestJson(`/api/dashboard/chat-history/${encodeURIComponent(chatbotId)}${suffix}`)
+}
+
+export function searchDashboardChatHistory(params: {
+  chatbotId: string
+  q: string
+  from?: string
+  to?: string
+  leadCaptured?: 'yes' | 'no'
+  limit?: number
+  offset?: number
+}): Promise<{ ok: true; rows: DashboardChatHistoryRow[]; pagination: { limit: number; offset: number; total: number } }> {
+  const query = new URLSearchParams()
+  query.set('chatbotId', params.chatbotId)
+  query.set('q', params.q)
+  if (params.from) query.set('from', params.from)
+  if (params.to) query.set('to', params.to)
+  if (params.leadCaptured) query.set('leadCaptured', params.leadCaptured)
+  if (params.limit !== undefined) query.set('limit', String(params.limit))
+  if (params.offset !== undefined) query.set('offset', String(params.offset))
+  return requestJson(`/api/dashboard/chat-history/search?${query.toString()}`)
+}
+
+export function getDashboardAnalytics(
+  chatbotId: string,
+  params?: {
+    from?: string
+    to?: string
+  },
+): Promise<{ ok: true } & DashboardAnalyticsResponse> {
+  const query = new URLSearchParams()
+  if (params?.from) query.set('from', params.from)
+  if (params?.to) query.set('to', params.to)
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return requestJson(`/api/dashboard/analytics/${encodeURIComponent(chatbotId)}${suffix}`)
+}
+
+export function postDashboardTestChat(
+  chatbotId: string,
+  payload: {
+    sessionId?: string
+    messages: Array<{
+      role: 'user' | 'assistant'
+      content: string
+    }>
+  },
+): Promise<{ ok: true; reply: string; chatbotId: string }> {
+  return requestJson(`/api/dashboard/test-chat/${encodeURIComponent(chatbotId)}`, {
+    method: 'POST',
+    body: payload,
+  })
+}
+
+export function getChatbotSettings(chatbotId: string): Promise<{ ok: true; settings: ChatbotSettings }> {
+  return requestJson(`/api/chatbot/settings/${encodeURIComponent(chatbotId)}`)
+}
+
+export function putChatbotSettings(
+  chatbotId: string,
+  payload: {
+    bot_name: string
+    greeting_message: string
+    primary_color: string
+  },
+): Promise<{ ok: true; settings: ChatbotSettings }> {
+  return requestJson(`/api/chatbot/settings/${encodeURIComponent(chatbotId)}`, {
+    method: 'PUT',
+    body: payload,
+  })
+}
+
 export function postRagIngestStart(payload: {
   chatbotId: string
   websiteUrl: string
@@ -695,7 +812,19 @@ export function patchDashboardLeadStatus(leadId: string, status: string): Promis
   })
 }
 
-export function getWidgetConfig(key: string): Promise<{ ok: true; config: { chatbot_id: string; widget_public_key: string; business_name: string; greeting: string; logo_url?: string | null; allowed_domains: string[] } }> {
+export function getWidgetConfig(key: string): Promise<{
+  ok: true
+  config: {
+    chatbot_id: string
+    widget_public_key: string
+    name?: string
+    business_name: string
+    greeting: string
+    primary_color?: string
+    logo_url?: string | null
+    allowed_domains: string[]
+  }
+}> {
   return requestJson(`/api/widget/config?key=${encodeURIComponent(key)}`, { auth: false })
 }
 

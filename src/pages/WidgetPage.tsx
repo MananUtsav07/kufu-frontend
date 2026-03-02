@@ -25,6 +25,8 @@ export function WidgetPage() {
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const [businessName, setBusinessName] = useState('Kufu')
+  const [assistantName, setAssistantName] = useState('Kufu Assistant')
+  const [primaryColor, setPrimaryColor] = useState('#4f46e5')
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [messages, setMessages] = useState<WidgetMessage[]>([])
 
@@ -49,6 +51,8 @@ export function WidgetPage() {
         }
 
         setBusinessName(response.config.business_name)
+        setAssistantName(response.config.name?.trim() || `${response.config.business_name} Assistant`)
+        setPrimaryColor(response.config.primary_color?.trim() || '#4f46e5')
         setLogoUrl(response.config.logo_url ?? null)
         setMessages([{ id: createId(), role: 'assistant', content: response.config.greeting }])
       } catch (loadError) {
@@ -140,7 +144,7 @@ export function WidgetPage() {
             )}
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">{businessName} Assistant</p>
+            <p className="text-sm font-semibold text-white">{assistantName}</p>
             <p className="text-xs text-slate-400">Powered by Kufu</p>
           </div>
         </div>
@@ -160,9 +164,10 @@ export function WidgetPage() {
             <div
               className={`max-w-[82%] whitespace-pre-line rounded-xl px-3 py-2 text-sm ${
                 message.role === 'user'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'text-white'
                   : 'border border-white/10 bg-white/[0.04] text-slate-100'
               }`}
+              style={message.role === 'user' ? { backgroundColor: primaryColor } : undefined}
             >
               {message.content || (sending && message.role === 'assistant' ? '...' : '')}
             </div>
@@ -184,8 +189,9 @@ export function WidgetPage() {
             onChange={(event) => setDraft(event.target.value)}
           />
           <button
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
+            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
             disabled={sending || !key}
+            style={{ backgroundColor: primaryColor }}
             type="submit"
           >
             Send

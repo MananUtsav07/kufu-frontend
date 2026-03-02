@@ -1,0 +1,4 @@
+.dashboard-analytics input,
+.dashboard-analytics select {
+  min-height: 40px;
+}

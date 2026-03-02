@@ -1,0 +1,4 @@
+.bot-customization-form textarea,
+.bot-customization-form input {
+  resize: vertical;
+}

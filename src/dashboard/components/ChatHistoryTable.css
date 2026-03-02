@@ -1,0 +1,8 @@
+.chat-history-table td,
+.chat-history-table th {
+  vertical-align: top;
+}
+
+.chat-history-table tbody tr:last-child {
+  border-bottom: 0;
+}

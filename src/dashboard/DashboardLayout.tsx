@@ -5,6 +5,10 @@ import './DashboardLayout.css'
 
 const DASHBOARD_LINKS = [
   { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { to: '/dashboard/chat-history', label: 'Chat History', icon: 'chat' },
+  { to: '/dashboard/analytics', label: 'Analytics', icon: 'analytics' },
+  { to: '/dashboard/chatbot-settings', label: 'Chatbot Settings', icon: 'tune' },
+  { to: '/dashboard/test-chat', label: 'Test Chat', icon: 'psychology' },
   { to: '/dashboard/profile', label: 'Profile', icon: 'person' },
   { to: '/dashboard/plan', label: 'Your Plan', icon: 'workspace_premium' },
   { to: '/dashboard/upgrade', label: 'Upgrade Plan', icon: 'rocket_launch' },

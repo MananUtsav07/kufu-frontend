@@ -5,3 +5,9 @@
 .profile-input {
   opacity: 0.95;
 }
+
+.profile-readonly {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

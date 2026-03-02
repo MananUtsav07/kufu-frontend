@@ -24,6 +24,7 @@ export function DashboardProfilePage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const hasWebsiteUrl = lastSavedProfile.websiteUrl.trim().length > 0
 
   useEffect(() => {
     const nextBusinessName = client?.businessName ?? ''
@@ -144,41 +145,59 @@ export function DashboardProfilePage() {
             <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
               Business Name
             </span>
-            <input
-              className="profile-input h-11 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm text-slate-100"
-              disabled={!isEditing || saving}
-              readOnly={!isEditing}
-              type="text"
-              value={businessName}
-              onChange={(event) => setBusinessName(event.target.value)}
-            />
+            {isEditing ? (
+              <input
+                className="profile-input h-11 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm text-slate-100"
+                disabled={saving}
+                type="text"
+                value={businessName}
+                onChange={(event) => setBusinessName(event.target.value)}
+              />
+            ) : (
+              <div className="profile-readonly flex h-11 w-full items-center rounded-lg border border-white/10 bg-white/[0.03] px-3 text-sm text-slate-200">
+                {lastSavedProfile.businessName || '-'}
+              </div>
+            )}
           </label>
 
           <label className="block">
             <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
               Website URL
             </span>
-            <input
-              className="profile-input h-11 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm text-slate-100"
-              disabled={!isEditing || saving}
-              placeholder="https://example.com"
-              readOnly={!isEditing}
-              type="url"
-              value={websiteUrl}
-              onChange={(event) => setWebsiteUrl(event.target.value)}
-            />
+            {isEditing ? (
+              <input
+                className="profile-input h-11 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm text-slate-100"
+                disabled={saving}
+                placeholder="https://example.com"
+                type="url"
+                value={websiteUrl}
+                onChange={(event) => setWebsiteUrl(event.target.value)}
+              />
+            ) : (
+              <div className="profile-readonly flex h-11 w-full items-center rounded-lg border border-white/10 bg-white/[0.03] px-3 text-sm text-slate-200">
+                {hasWebsiteUrl ? (
+                  <a
+                    className="truncate text-indigo-300 hover:text-indigo-200 hover:underline"
+                    href={lastSavedProfile.websiteUrl}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    {lastSavedProfile.websiteUrl}
+                  </a>
+                ) : (
+                  '-'
+                )}
+              </div>
+            )}
           </label>
 
           <label className="block">
             <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
               Email
             </span>
-            <input
-              className="profile-input h-11 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm text-slate-100"
-              disabled
-              type="email"
-              value={user?.email || ''}
-            />
+            <div className="profile-readonly flex h-11 w-full items-center rounded-lg border border-white/10 bg-white/[0.03] px-3 text-sm text-slate-200">
+              {user?.email || '-'}
+            </div>
           </label>
 
           <div className="flex flex-wrap items-center gap-2">

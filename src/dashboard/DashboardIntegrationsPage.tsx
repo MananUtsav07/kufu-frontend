@@ -1,4 +1,4 @@
-import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from 'react'
+import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useAuth } from '../lib/auth-context'
 import {
@@ -41,12 +41,14 @@ export function DashboardIntegrationsPage() {
   const [newWebsiteUrl, setNewWebsiteUrl] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [snippetMap, setSnippetMap] = useState<Record<string, string>>({})
+  const [copiedSnippetByChatbot, setCopiedSnippetByChatbot] = useState<Record<string, boolean>>({})
   const [logoUrlByChatbot, setLogoUrlByChatbot] = useState<Record<string, string | null>>({})
   const [logoBusyByChatbot, setLogoBusyByChatbot] = useState<Record<string, boolean>>({})
   const [ragRunByChatbot, setRagRunByChatbot] = useState<Record<string, string>>({})
   const [ragStatusByRun, setRagStatusByRun] = useState<Record<string, RagIngestionRun>>({})
   const [ragActionBusy, setRagActionBusy] = useState<Record<string, boolean>>({})
   const [ragUrlsText, setRagUrlsText] = useState('')
+  const copyResetTimersRef = useRef<Record<string, number>>({})
 
   const loadChatbotLogos = async (items: DashboardChatbot[]) => {
     if (items.length === 0) {
@@ -88,6 +90,14 @@ export function DashboardIntegrationsPage() {
 
   useEffect(() => {
     void loadChatbots()
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      Object.values(copyResetTimersRef.current).forEach((timerId) => {
+        window.clearTimeout(timerId)
+      })
+    }
   }, [])
 
   useEffect(() => {
@@ -182,6 +192,21 @@ export function DashboardIntegrationsPage() {
         delete next[chatbotId]
         return next
       })
+      setSnippetMap((current) => {
+        const next = { ...current }
+        delete next[chatbotId]
+        return next
+      })
+      setCopiedSnippetByChatbot((current) => {
+        const next = { ...current }
+        delete next[chatbotId]
+        return next
+      })
+      const resetTimer = copyResetTimersRef.current[chatbotId]
+      if (resetTimer) {
+        window.clearTimeout(resetTimer)
+        delete copyResetTimersRef.current[chatbotId]
+      }
     } catch (deleteError) {
       setError(deleteError instanceof ApiError ? deleteError.message : 'Failed to delete chatbot.')
     }
@@ -192,13 +217,29 @@ export function DashboardIntegrationsPage() {
     try {
       const response = await getDashboardEmbed(chatbotId)
       setSnippetMap((current) => ({ ...current, [chatbotId]: response.snippet }))
+      setCopiedSnippetByChatbot((current) => ({ ...current, [chatbotId]: false }))
     } catch (snippetError) {
       setError(snippetError instanceof ApiError ? snippetError.message : 'Failed to load embed snippet.')
     }
   }
 
-  const copySnippet = async (snippet: string) => {
-    await navigator.clipboard.writeText(snippet)
+  const copySnippet = async (chatbotId: string, snippet: string) => {
+    try {
+      await navigator.clipboard.writeText(snippet)
+      setCopiedSnippetByChatbot((current) => ({ ...current, [chatbotId]: true }))
+
+      const existingTimer = copyResetTimersRef.current[chatbotId]
+      if (existingTimer) {
+        window.clearTimeout(existingTimer)
+      }
+
+      copyResetTimersRef.current[chatbotId] = window.setTimeout(() => {
+        setCopiedSnippetByChatbot((current) => ({ ...current, [chatbotId]: false }))
+        delete copyResetTimersRef.current[chatbotId]
+      }, 1800)
+    } catch {
+      setError('Failed to copy snippet. Please copy it manually.')
+    }
   }
 
   const handleLogoUploadChange = async (chatbotId: string, event: ChangeEvent<HTMLInputElement>) => {
@@ -493,21 +534,44 @@ export function DashboardIntegrationsPage() {
                   >
                     Load Embed Snippet
                   </button>
-                  {snippetMap[chatbot.id] ? (
-                    <button
-                      className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/5"
-                      type="button"
-                      onClick={() => copySnippet(snippetMap[chatbot.id])}
-                    >
-                      Copy Snippet
-                    </button>
-                  ) : null}
                 </div>
 
                 {snippetMap[chatbot.id] ? (
-                  <pre className="integration-snippet mt-3 overflow-x-auto rounded-lg border border-white/10 bg-slate-950/80 p-3 text-xs text-slate-300">
-                    {snippetMap[chatbot.id]}
-                  </pre>
+                  <div className="integration-snippet-shell mt-3 rounded-lg border border-white/10 bg-slate-950/80 p-3">
+                    <div className="integration-snippet-toolbar">
+                      <span className="integration-snippet-label">Embed Snippet</span>
+                      <button
+                        className="integration-snippet-copy"
+                        type="button"
+                        title={copiedSnippetByChatbot[chatbot.id] ? 'Copied' : 'Copy snippet'}
+                        aria-label={copiedSnippetByChatbot[chatbot.id] ? 'Snippet copied' : 'Copy embed snippet'}
+                        onClick={() => copySnippet(chatbot.id, snippetMap[chatbot.id])}
+                      >
+                        {copiedSnippetByChatbot[chatbot.id] ? (
+                          <span className="integration-copy-feedback">Copied</span>
+                        ) : null}
+                        {copiedSnippetByChatbot[chatbot.id] ? (
+                          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <path
+                              d="M4.5 10.5L8 14L15.5 6.5"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <rect x="7" y="3" width="10" height="12" rx="2" stroke="currentColor" strokeWidth="1.6" />
+                            <rect x="3" y="7" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.6" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                    <pre className="integration-snippet overflow-x-auto text-xs text-slate-300">
+                      {snippetMap[chatbot.id]}
+                    </pre>
+                  </div>
                 ) : null}
               </article>
             )

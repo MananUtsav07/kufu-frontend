@@ -5,6 +5,7 @@
 
 .dashboard-integrations .integration-snippet {
   white-space: pre-wrap;
+  margin: 0;
 }
 
 .dashboard-integrations .rag-status-box {
@@ -13,4 +14,54 @@
 
 .dashboard-integrations .integration-logo-shell {
   box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.08);
+}
+
+.dashboard-integrations .integration-snippet-toolbar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-integrations .integration-snippet-label {
+  color: rgb(148 163 184);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-integrations .integration-snippet-copy {
+  align-items: center;
+  background: rgb(15 23 42 / 0.7);
+  border: 1px solid rgb(148 163 184 / 0.24);
+  border-radius: 999px;
+  color: rgb(203 213 225);
+  cursor: pointer;
+  display: inline-flex;
+  gap: 0.45rem;
+  justify-content: center;
+  min-height: 1.95rem;
+  min-width: 1.95rem;
+  padding: 0.35rem 0.55rem;
+  transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+}
+
+.dashboard-integrations .integration-snippet-copy:hover {
+  background: rgb(15 23 42 / 0.95);
+  border-color: rgb(148 163 184 / 0.45);
+  color: rgb(241 245 249);
+}
+
+.dashboard-integrations .integration-snippet-copy svg {
+  height: 0.92rem;
+  width: 0.92rem;
+}
+
+.dashboard-integrations .integration-copy-feedback {
+  color: rgb(52 211 153);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }

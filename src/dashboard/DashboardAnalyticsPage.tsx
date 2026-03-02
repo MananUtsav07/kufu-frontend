@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 
+import { useAuth } from '../lib/auth-context'
 import { AnalyticsCards } from './components/AnalyticsCards'
 import {
   ApiError,
@@ -16,6 +18,16 @@ type AnalyticsFilters = {
 }
 
 export function DashboardAnalyticsPage() {
+  const { plan, isAdmin } = useAuth()
+  const hasAnalyticsAccess = useMemo(() => {
+    if (isAdmin) {
+      return true
+    }
+
+    const planCode = typeof plan?.code === 'string' ? plan.code.toLowerCase() : ''
+    return planCode === 'pro' || planCode === 'business'
+  }, [isAdmin, plan?.code])
+
   const [loadingChatbots, setLoadingChatbots] = useState(true)
   const [loadingAnalytics, setLoadingAnalytics] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -79,6 +91,12 @@ export function DashboardAnalyticsPage() {
       return
     }
 
+    if (!hasAnalyticsAccess) {
+      setAccessDenied(true)
+      setAnalytics(null)
+      return
+    }
+
     void (async () => {
       setLoadingAnalytics(true)
       setError(null)
@@ -121,7 +139,7 @@ export function DashboardAnalyticsPage() {
     return () => {
       active = false
     }
-  }, [appliedFilters, selectedChatbotId])
+  }, [appliedFilters, hasAnalyticsAccess, selectedChatbotId])
 
   const applyFilters = () => {
     const next: AnalyticsFilters = {}
@@ -192,7 +210,13 @@ export function DashboardAnalyticsPage() {
 
       {accessDenied ? (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-          Analytics is available only on Pro and Business plans.
+          <p>Analytics is available only on Pro and Business plans.</p>
+          <Link
+            className="mt-2 inline-flex rounded-md border border-amber-400/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-100 hover:bg-amber-500/20"
+            to="/dashboard/upgrade"
+          >
+            Upgrade Plan
+          </Link>
         </div>
       ) : null}
 

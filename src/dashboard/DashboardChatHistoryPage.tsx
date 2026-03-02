@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 
+import { useAuth } from '../lib/auth-context'
 import { ChatHistoryTable } from './components/ChatHistoryTable'
 import {
   ApiError,
@@ -23,6 +25,16 @@ type AppliedFilters = {
 const PAGE_SIZE = 20
 
 export function DashboardChatHistoryPage() {
+  const { plan, isAdmin } = useAuth()
+  const hasChatHistoryAccess = useMemo(() => {
+    if (isAdmin) {
+      return true
+    }
+
+    const planCode = typeof plan?.code === 'string' ? plan.code.toLowerCase() : ''
+    return planCode === 'starter' || planCode === 'pro' || planCode === 'business'
+  }, [isAdmin, plan?.code])
+
   const [loadingChatbots, setLoadingChatbots] = useState(true)
   const [loadingRows, setLoadingRows] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -92,6 +104,13 @@ export function DashboardChatHistoryPage() {
       return
     }
 
+    if (!hasChatHistoryAccess) {
+      setAccessDenied(true)
+      setRows([])
+      setTotal(0)
+      return
+    }
+
     void (async () => {
       setLoadingRows(true)
       setError(null)
@@ -146,7 +165,7 @@ export function DashboardChatHistoryPage() {
     return () => {
       active = false
     }
-  }, [appliedFilters, offset, selectedChatbotId])
+  }, [appliedFilters, hasChatHistoryAccess, offset, selectedChatbotId])
 
   const canGoPrevious = offset > 0
   const canGoNext = offset + PAGE_SIZE < total
@@ -282,7 +301,13 @@ export function DashboardChatHistoryPage() {
 
       {accessDenied ? (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-          Chat history is available on Starter and above. Upgrade your plan to access this section.
+          <p>Chat history is available on Starter and above.</p>
+          <Link
+            className="mt-2 inline-flex rounded-md border border-amber-400/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-100 hover:bg-amber-500/20"
+            to="/dashboard/upgrade"
+          >
+            Upgrade Plan
+          </Link>
         </div>
       ) : null}
 

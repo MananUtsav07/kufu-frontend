@@ -23,6 +23,7 @@ import { DashboardProfilePage } from "./dashboard/DashboardProfilePage";
 import { DashboardSupportPage } from "./dashboard/DashboardSupportPage";
 import { DashboardTestChatPage } from "./dashboard/DashboardTestChatPage";
 import { DashboardUpgradePlanPage } from "./dashboard/DashboardUpgradePlanPage";
+import { PlanProtectedRoute } from "./lib/plan-protected-route";
 import { ProtectedRoute } from "./lib/protected-route";
 import { CreateAccountPage } from "./pages/CreateAccountPage";
 import { DemoPage } from "./pages/DemoPage";
@@ -129,8 +130,22 @@ function App() {
             <Route path="support" element={<DashboardSupportPage />} />
             <Route path="custom-quote" element={<DashboardCustomQuotePage />} />
             <Route path="leads" element={<DashboardLeadsPage />} />
-            <Route path="chat-history" element={<DashboardChatHistoryPage />} />
-            <Route path="analytics" element={<DashboardAnalyticsPage />} />
+            <Route
+              path="chat-history"
+              element={(
+                <PlanProtectedRoute minPlan="starter">
+                  <DashboardChatHistoryPage />
+                </PlanProtectedRoute>
+              )}
+            />
+            <Route
+              path="analytics"
+              element={(
+                <PlanProtectedRoute minPlan="pro">
+                  <DashboardAnalyticsPage />
+                </PlanProtectedRoute>
+              )}
+            />
             <Route path="chatbot-settings" element={<DashboardChatbotSettingsPage />} />
             <Route path="test-chat" element={<DashboardTestChatPage />} />
             {import.meta.env.DEV ? (

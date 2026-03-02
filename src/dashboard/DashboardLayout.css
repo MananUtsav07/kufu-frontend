@@ -16,3 +16,43 @@
 .dashboard-sidebar-link {
   white-space: nowrap;
 }
+
+.dashboard-sidebar-link-locked {
+  position: relative;
+}
+
+.dashboard-link-lock {
+  margin-left: auto;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: rgb(251 191 36 / 0.95);
+}
+
+.dashboard-link-tooltip {
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: max-content;
+  max-width: 240px;
+  white-space: normal;
+  border-radius: 8px;
+  border: 1px solid rgb(245 158 11 / 0.35);
+  background: rgb(30 41 59 / 0.96);
+  color: rgb(254 240 138);
+  font-size: 11px;
+  line-height: 1.3;
+  padding: 6px 8px;
+  box-shadow: 0 8px 24px rgb(2 6 23 / 0.45);
+  z-index: 40;
+}
+
+.dashboard-sidebar-link:hover .dashboard-link-tooltip,
+.dashboard-sidebar-link:focus-visible .dashboard-link-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}

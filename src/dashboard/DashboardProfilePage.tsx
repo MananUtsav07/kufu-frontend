@@ -1,4 +1,4 @@
-﻿import { type FormEvent, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
 
 import { ApiError, postDashboardProfile } from '../lib/api'
 import { useAuth } from '../lib/auth-context'
@@ -16,6 +16,7 @@ export function DashboardProfilePage() {
 
   const [businessName, setBusinessName] = useState(client?.businessName ?? '')
   const [websiteUrl, setWebsiteUrl] = useState(client?.websiteUrl ?? '')
+  const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -25,8 +26,27 @@ export function DashboardProfilePage() {
     setWebsiteUrl(client?.websiteUrl ?? '')
   }, [client?.businessName, client?.websiteUrl])
 
+  const handleEdit = () => {
+    setError(null)
+    setSuccess(null)
+    setIsEditing(true)
+  }
+
+  const handleCancel = () => {
+    setBusinessName(client?.businessName ?? '')
+    setWebsiteUrl(client?.websiteUrl ?? '')
+    setError(null)
+    setSuccess(null)
+    setIsEditing(false)
+  }
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    if (!isEditing) {
+      return
+    }
+
     setError(null)
     setSuccess(null)
 
@@ -44,6 +64,7 @@ export function DashboardProfilePage() {
 
       await refreshMe()
       setSuccess('Profile updated successfully.')
+      setIsEditing(false)
     } catch (saveError) {
       setError(saveError instanceof ApiError ? saveError.message : 'Failed to update profile.')
     } finally {
@@ -92,6 +113,8 @@ export function DashboardProfilePage() {
             </span>
             <input
               className="profile-input h-11 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm text-slate-100"
+              disabled={!isEditing || saving}
+              readOnly={!isEditing}
               type="text"
               value={businessName}
               onChange={(event) => setBusinessName(event.target.value)}
@@ -104,7 +127,9 @@ export function DashboardProfilePage() {
             </span>
             <input
               className="profile-input h-11 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm text-slate-100"
+              disabled={!isEditing || saving}
               placeholder="https://example.com"
+              readOnly={!isEditing}
               type="url"
               value={websiteUrl}
               onChange={(event) => setWebsiteUrl(event.target.value)}
@@ -123,16 +148,37 @@ export function DashboardProfilePage() {
             />
           </label>
 
-          <button
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
-            disabled={saving}
-            type="submit"
-          >
-            {saving ? 'Saving...' : 'Save Profile'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {!isEditing ? (
+              <button
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500"
+                type="button"
+                onClick={handleEdit}
+              >
+                Edit Profile
+              </button>
+            ) : (
+              <>
+                <button
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
+                  disabled={saving}
+                  type="submit"
+                >
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button
+                  className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-70"
+                  disabled={saving}
+                  type="button"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+          </div>
         </form>
       </section>
     </div>
   )
 }
-

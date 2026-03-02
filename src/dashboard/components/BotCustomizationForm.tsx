@@ -16,6 +16,16 @@ type BotCustomizationFormProps = {
 }
 
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/
+const DEFAULT_PRIMARY_COLOR = '#6366f1'
+
+function normalizeHexColor(value: string | null | undefined): string {
+  if (!value) {
+    return DEFAULT_PRIMARY_COLOR
+  }
+
+  const trimmed = value.trim()
+  return HEX_COLOR_PATTERN.test(trimmed) ? trimmed : DEFAULT_PRIMARY_COLOR
+}
 
 export function BotCustomizationForm({
   initialSettings,
@@ -25,21 +35,21 @@ export function BotCustomizationForm({
 }: BotCustomizationFormProps) {
   const [botName, setBotName] = useState('')
   const [greetingMessage, setGreetingMessage] = useState('')
-  const [primaryColor, setPrimaryColor] = useState('#6366f1')
+  const [primaryColor, setPrimaryColor] = useState(DEFAULT_PRIMARY_COLOR)
   const [formError, setFormError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!initialSettings) {
       setBotName('')
       setGreetingMessage('')
-      setPrimaryColor('#6366f1')
+      setPrimaryColor(DEFAULT_PRIMARY_COLOR)
       setFormError(null)
       return
     }
 
     setBotName(initialSettings.bot_name)
     setGreetingMessage(initialSettings.greeting_message)
-    setPrimaryColor(initialSettings.primary_color)
+    setPrimaryColor(normalizeHexColor(initialSettings.primary_color))
     setFormError(null)
   }, [initialSettings])
 
@@ -47,7 +57,7 @@ export function BotCustomizationForm({
     event.preventDefault()
     const normalizedBotName = botName.trim()
     const normalizedGreeting = greetingMessage.trim()
-    const normalizedColor = primaryColor.trim()
+    const normalizedColor = normalizeHexColor(primaryColor)
 
     if (!normalizedBotName) {
       setFormError('Bot name is required.')
@@ -101,10 +111,9 @@ export function BotCustomizationForm({
         <label className="block">
           <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">Primary Color</span>
           <input
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+            className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-2 py-1.5"
             disabled={loading || saving || !initialSettings}
-            placeholder="#6366f1"
-            type="text"
+            type="color"
             value={primaryColor}
             onChange={(event) => setPrimaryColor(event.target.value)}
           />
@@ -112,10 +121,7 @@ export function BotCustomizationForm({
 
         <div className="rounded-xl border border-white/10 bg-slate-950/70 p-3">
           <p className="mb-2 text-xs uppercase tracking-wide text-slate-400">Preview</p>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex h-4 w-4 rounded-full border border-white/30" style={{ backgroundColor: primaryColor }} />
-            <span className="text-sm text-slate-200">Header and action accents</span>
-          </div>
+          <p className="text-sm text-slate-200">Selected color: {primaryColor.toUpperCase()}</p>
         </div>
       </div>
 

@@ -21,17 +21,18 @@ import {
 import './DashboardIntegrationsPage.css'
 
 const STARTER_PLUS_PLANS = new Set(['starter', 'pro', 'business'])
+const DEFAULT_SYNC_MAX_PAGES = 60
 
 export function DashboardIntegrationsPage() {
   const { plan, isAdmin } = useAuth()
+  const currentPlanCode = typeof plan?.code === 'string' ? plan.code.toLowerCase() : 'free'
   const canUploadAssets = useMemo(() => {
     if (isAdmin) {
       return true
     }
 
-    const planCode = typeof plan?.code === 'string' ? plan.code.toLowerCase() : ''
-    return STARTER_PLUS_PLANS.has(planCode)
-  }, [isAdmin, plan?.code])
+    return STARTER_PLUS_PLANS.has(currentPlanCode)
+  }, [currentPlanCode, isAdmin])
 
   const [chatbots, setChatbots] = useState<DashboardChatbot[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,7 +46,6 @@ export function DashboardIntegrationsPage() {
   const [ragRunByChatbot, setRagRunByChatbot] = useState<Record<string, string>>({})
   const [ragStatusByRun, setRagStatusByRun] = useState<Record<string, RagIngestionRun>>({})
   const [ragActionBusy, setRagActionBusy] = useState<Record<string, boolean>>({})
-  const [ragMaxPages, setRagMaxPages] = useState(60)
   const [ragUrlsText, setRagUrlsText] = useState('')
 
   const loadChatbotLogos = async (items: DashboardChatbot[]) => {
@@ -251,7 +251,7 @@ export function DashboardIntegrationsPage() {
       const payload = {
         chatbotId: chatbot.id,
         websiteUrl,
-        maxPages: ragMaxPages,
+        maxPages: DEFAULT_SYNC_MAX_PAGES,
         urls,
       }
 
@@ -311,9 +311,9 @@ export function DashboardIntegrationsPage() {
         <p className="text-sm text-slate-400">Create chatbots, manage logos, and copy installation snippets.</p>
       </div>
 
-      {!canUploadAssets ? (
+      {!isAdmin && currentPlanCode === 'free' && chatbots.length > 0 ? (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-          Upgrade to Starter or above to upload chatbot logos.
+          Upgrade to Starter or above to upload chatbot logo
         </div>
       ) : null}
 
@@ -347,18 +347,6 @@ export function DashboardIntegrationsPage() {
           >
             {creating ? 'Creating...' : 'Create'}
           </button>
-        </div>
-        <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
-          <label htmlFor="rag-max-pages">Sync max pages</label>
-          <input
-            className="w-24 rounded-lg border border-white/10 bg-white/[0.04] px-2 py-1 text-slate-200"
-            id="rag-max-pages"
-            max={200}
-            min={1}
-            type="number"
-            value={ragMaxPages}
-            onChange={(event) => setRagMaxPages(Number(event.target.value || 60))}
-          />
         </div>
         <div className="mt-3 space-y-2">
           <label className="text-xs text-slate-400" htmlFor="rag-urls-input">
@@ -529,4 +517,3 @@ export function DashboardIntegrationsPage() {
     </div>
   )
 }
-

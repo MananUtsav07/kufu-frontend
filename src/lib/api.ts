@@ -174,6 +174,7 @@ export type DashboardQuote = {
   user_id: string
   requested_plan: string | null
   requested_chatbots: number | null
+  requested_monthly_messages: number | null
   requested_unlimited_messages: boolean
   notes: string | null
   status: string
@@ -784,12 +785,27 @@ export function getDashboardQuotes(): Promise<{ ok: true; quotes: DashboardQuote
 }
 
 export function postDashboardQuote(payload: {
-  requested_plan?: 'starter' | 'pro' | 'business'
+  requested_plan?: 'starter' | 'pro' | 'business' | null
   requested_chatbots?: number
+  requested_monthly_messages?: number
   requested_unlimited_messages?: boolean
   notes: string
 }): Promise<{ ok: true; quote: DashboardQuote }> {
   return requestJson('/api/dashboard/quotes', { body: payload })
+}
+
+export function getChatbotByUser(userId: string): Promise<{
+  ok: true
+  userId: string
+  hasChatbot: boolean
+  chatbotCount: number
+  chatbots: Array<{
+    id: string
+    name: string
+    is_active: boolean
+  }>
+}> {
+  return requestJson(`/api/chatbot/user/${encodeURIComponent(userId)}`)
 }
 
 export function getDashboardLeads(params?: {

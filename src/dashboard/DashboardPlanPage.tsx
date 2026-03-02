@@ -1,8 +1,21 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { ApiError, getDashboardPlan, type Plan, type Subscription } from '../lib/api'
 import './DashboardPlanPage.css'
+
+function formatSubscriptionDate(value: string | undefined): string {
+  if (!value) {
+    return '-'
+  }
+
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    return '-'
+  }
+
+  return new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC' }).format(parsed)
+}
 
 export function DashboardPlanPage() {
   const [loading, setLoading] = useState(true)
@@ -75,11 +88,11 @@ export function DashboardPlanPage() {
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-indigo-200">Period Start</p>
-            <p className="mt-1 text-sm text-slate-100">{subscription?.current_period_start || '-'}</p>
+            <p className="mt-1 text-sm text-slate-100">{formatSubscriptionDate(subscription?.current_period_start)}</p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-indigo-200">Period End</p>
-            <p className="mt-1 text-sm text-slate-100">{subscription?.current_period_end || '-'}</p>
+            <p className="mt-1 text-sm text-slate-100">{formatSubscriptionDate(subscription?.current_period_end)}</p>
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-﻿import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 
 import { ApiError, getDashboardQuotes, postDashboardQuote, type DashboardQuote } from '../lib/api'
 import { formatDateTime } from '../lib/utils'
@@ -6,8 +6,8 @@ import './DashboardCustomQuotePage.css'
 
 export function DashboardCustomQuotePage() {
   const [quotes, setQuotes] = useState<DashboardQuote[]>([])
-  const [requestedPlan, setRequestedPlan] = useState<'starter' | 'pro' | 'business'>('business')
-  const [requestedChatbots, setRequestedChatbots] = useState(3)
+  const [requestedChatbots, setRequestedChatbots] = useState(1)
+  const [requestedMonthlyMessages, setRequestedMonthlyMessages] = useState(500)
   const [requestedUnlimitedMessages, setRequestedUnlimitedMessages] = useState(false)
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(true)
@@ -40,11 +40,17 @@ export function DashboardCustomQuotePage() {
       return
     }
 
+    if (!requestedUnlimitedMessages && requestedMonthlyMessages < 1) {
+      setError('Monthly messages must be at least 1 when unlimited is disabled.')
+      return
+    }
+
     setSubmitting(true)
     try {
       const response = await postDashboardQuote({
-        requested_plan: requestedPlan,
+        requested_plan: null,
         requested_chatbots: requestedChatbots,
+        requested_monthly_messages: requestedUnlimitedMessages ? undefined : requestedMonthlyMessages,
         requested_unlimited_messages: requestedUnlimitedMessages,
         notes: notes.trim(),
       })
@@ -74,26 +80,25 @@ export function DashboardCustomQuotePage() {
       <form className="quote-form rounded-2xl border border-white/10 bg-slate-900/70 p-4" onSubmit={submitQuote}>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Requested Plan</span>
-            <select
-              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
-              value={requestedPlan}
-              onChange={(event) => setRequestedPlan(event.target.value as 'starter' | 'pro' | 'business')}
-            >
-              <option value="starter">Starter</option>
-              <option value="pro">Pro</option>
-              <option value="business">Business</option>
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Requested Chatbots</span>
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Requested Number of Chatbots</span>
             <input
               className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
               min={1}
               type="number"
               value={requestedChatbots}
-              onChange={(event) => setRequestedChatbots(Number(event.target.value))}
+              onChange={(event) => setRequestedChatbots(Number(event.target.value || 1))}
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Monthly Messages</span>
+            <input
+              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+              disabled={requestedUnlimitedMessages}
+              min={1}
+              type="number"
+              value={requestedMonthlyMessages}
+              onChange={(event) => setRequestedMonthlyMessages(Number(event.target.value || 1))}
             />
           </label>
         </div>
@@ -133,10 +138,19 @@ export function DashboardCustomQuotePage() {
           quotes.map((quote) => (
             <article key={quote.id} className="quote-item rounded-2xl border border-white/10 bg-slate-900/70 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-white">{quote.requested_plan?.toUpperCase() || 'CUSTOM'} request</p>
+                <p className="text-sm font-semibold text-white">Custom request</p>
                 <span className="rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-200">
                   {quote.status}
                 </span>
+              </div>
+              <div className="mt-2 text-xs text-slate-400">
+                <p>Requested chatbots: {quote.requested_chatbots ?? '-'}</p>
+                <p>
+                  Monthly messages:{' '}
+                  {quote.requested_unlimited_messages
+                    ? 'Unlimited'
+                    : quote.requested_monthly_messages?.toLocaleString('en-IN') ?? '-'}
+                </p>
               </div>
               <p className="mt-2 text-sm text-slate-300">{quote.notes}</p>
               <p className="mt-2 text-xs text-slate-500">Created: {formatDateTime(quote.created_at)}</p>

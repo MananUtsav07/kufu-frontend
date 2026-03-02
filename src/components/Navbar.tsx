@@ -90,12 +90,8 @@ function AuthActions() {
 
       <AnimatePresence>
         {isMenuOpen && (
-          <motion.div
+          <div
             role="menu"
-            initial={{ opacity: 0, y: 8, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 6, scale: 0.97 }}
-            transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
             className="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-white/[0.08] bg-slate-900/95 backdrop-blur-xl p-1.5 z-50 shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
           >
             <div className="px-3 py-2 mb-1 border-b border-white/[0.07]">
@@ -189,7 +185,7 @@ function AuthActions() {
               </svg>
               Logout
             </button>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
@@ -256,10 +252,7 @@ export function Navbar({ page: _page }: NavbarProps) {
         .grad-bg { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
       `}</style>
 
-      <motion.nav
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      <nav
         className={`fixed top-0 z-50 w-full px-6 lg:px-10 backdrop-blur-xl transition-all duration-300 ${
           scrolled
             ? "bg-slate-950/90 shadow-[0_4px_24px_rgba(0,0,0,0.4)] border-b border-white/[0.06]"
@@ -274,7 +267,7 @@ export function Navbar({ page: _page }: NavbarProps) {
             aria-label={`${brandName} Home`}
             className="flex items-center gap-2.5 justify-self-start group"
           >
-            <motion.div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl grad-bg flex items-center justify-center flex-shrink-0 shadow-[0_2px_12px_rgba(99,102,241,0.35)] group-hover:scale-105 transition-transform">
                 <BrandBotIcon size={18} />
               </div>
@@ -282,7 +275,7 @@ export function Navbar({ page: _page }: NavbarProps) {
               <span className="font-display font-extrabold text-[1.1rem] tracking-tight text-slate-100">
                 {brandName}
               </span>
-            </motion.div>
+            </div>
           </Link>
 
           {/* Center: Nav Links — naturally centered by grid */}
@@ -359,13 +352,7 @@ export function Navbar({ page: _page }: NavbarProps) {
 
         <AnimatePresence>
           {isMobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
-              className="md:hidden pb-4"
-            >
+            <div className="md:hidden pb-4">
               <div className="max-w-7xl mx-auto rounded-2xl border border-white/[0.08] bg-slate-900/95 backdrop-blur-xl p-3">
                 <NavbarLinks
                   className="flex flex-col"
@@ -382,10 +369,10 @@ export function Navbar({ page: _page }: NavbarProps) {
                   </Link>
                 </div>
               </div>
-            </motion.div>
+            </div>
           )}
         </AnimatePresence>
-      </motion.nav>
+      </nav>
     </>
   );
 }

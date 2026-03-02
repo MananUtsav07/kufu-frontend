@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { ApiError, getDashboardSummary, type DashboardSummary } from '../lib/api'
+import { RequireChatbot } from '../components/RequireChatbot'
+import { ApiError, getChatbotByUser, getDashboardSummary, type DashboardSummary } from '../lib/api'
 import { useAuth } from '../lib/auth-context'
 import { formatDateTime } from '../lib/utils'
 import './DashboardOverviewPage.css'
@@ -16,10 +17,12 @@ const EMPTY_SUMMARY: DashboardSummary = {
 }
 
 export function DashboardOverviewPage() {
-  const { plan, isAdmin } = useAuth()
+  const { plan, isAdmin, user } = useAuth()
   const [loading, setLoading] = useState(true)
+  const [loadingChatbotCheck, setLoadingChatbotCheck] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [summary, setSummary] = useState<DashboardSummary>(EMPTY_SUMMARY)
+  const [hasChatbot, setHasChatbot] = useState(true)
   const [recentSessions, setRecentSessions] = useState<Array<{ session_id: string; messages: Array<Record<string, unknown>> }>>([])
 
   const currentPlanCode = typeof plan?.code === 'string' ? plan.code.toLowerCase() : 'free'
@@ -55,6 +58,43 @@ export function DashboardOverviewPage() {
       mounted = false
     }
   }, [])
+
+  useEffect(() => {
+    let mounted = true
+
+    if (!shouldShowRecentSessions || !user?.id) {
+      setHasChatbot(true)
+      setLoadingChatbotCheck(false)
+      return () => {
+        mounted = false
+      }
+    }
+
+    void (async () => {
+      setLoadingChatbotCheck(true)
+      try {
+        const response = await getChatbotByUser(user.id)
+        if (!mounted) {
+          return
+        }
+        setHasChatbot(response.hasChatbot)
+      } catch {
+        if (!mounted) {
+          return
+        }
+        // Keep overview resilient if chatbot lookup fails temporarily.
+        setHasChatbot(true)
+      } finally {
+        if (mounted) {
+          setLoadingChatbotCheck(false)
+        }
+      }
+    })()
+
+    return () => {
+      mounted = false
+    }
+  }, [shouldShowRecentSessions, user?.id])
 
   return (
     <div className="dashboard-overview space-y-5">
@@ -101,40 +141,48 @@ export function DashboardOverviewPage() {
       </div>
 
       {shouldShowRecentSessions ? (
-        <section className="overview-card rounded-2xl border border-white/10 bg-slate-900/70 p-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-white">Recent Chat Sessions</h2>
-            <span className="text-xs text-slate-400">Latest {recentSessions.length}</span>
-          </div>
+        loadingChatbotCheck ? (
+          <section className="overview-card rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+            <p className="text-sm text-slate-400">Loading chatbots...</p>
+          </section>
+        ) : (
+          <RequireChatbot hasChatbot={hasChatbot}>
+            <section className="overview-card rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-white">Recent Chat Sessions</h2>
+                <span className="text-xs text-slate-400">Latest {recentSessions.length}</span>
+              </div>
 
-          <div className="space-y-3">
-            {recentSessions.length === 0 ? (
-              <p className="text-sm text-slate-400">{loading ? 'Loading sessions...' : 'No chat sessions yet.'}</p>
-            ) : (
-              recentSessions.map((session) => {
-                const latestMessage = session.messages[0]
-                const latestText =
-                  typeof latestMessage?.content === 'string'
-                    ? latestMessage.content
-                    : 'No content'
-                const latestCreatedAt =
-                  typeof latestMessage?.created_at === 'string'
-                    ? latestMessage.created_at
-                    : null
+              <div className="space-y-3">
+                {recentSessions.length === 0 ? (
+                  <p className="text-sm text-slate-400">{loading ? 'Loading sessions...' : 'No chat sessions yet.'}</p>
+                ) : (
+                  recentSessions.map((session) => {
+                    const latestMessage = session.messages[0]
+                    const latestText =
+                      typeof latestMessage?.content === 'string'
+                        ? latestMessage.content
+                        : 'No content'
+                    const latestCreatedAt =
+                      typeof latestMessage?.created_at === 'string'
+                        ? latestMessage.created_at
+                        : null
 
-                return (
-                  <div key={session.session_id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{session.session_id}</p>
-                    <p className="mt-1 text-sm text-slate-200 line-clamp-2">{latestText}</p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {latestCreatedAt ? formatDateTime(latestCreatedAt) : 'Timestamp unavailable'}
-                    </p>
-                  </div>
-                )
-              })
-            )}
-          </div>
-        </section>
+                    return (
+                      <div key={session.session_id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{session.session_id}</p>
+                        <p className="mt-1 text-sm text-slate-200 line-clamp-2">{latestText}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {latestCreatedAt ? formatDateTime(latestCreatedAt) : 'Timestamp unavailable'}
+                        </p>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </section>
+          </RequireChatbot>
+        )
       ) : null}
     </div>
   )

@@ -16,25 +16,41 @@ export function DashboardProfilePage() {
 
   const [businessName, setBusinessName] = useState(client?.businessName ?? '')
   const [websiteUrl, setWebsiteUrl] = useState(client?.websiteUrl ?? '')
+  const [lastSavedProfile, setLastSavedProfile] = useState({
+    businessName: client?.businessName ?? '',
+    websiteUrl: client?.websiteUrl ?? '',
+  })
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
   useEffect(() => {
-    setBusinessName(client?.businessName ?? '')
-    setWebsiteUrl(client?.websiteUrl ?? '')
-  }, [client?.businessName, client?.websiteUrl])
+    const nextBusinessName = client?.businessName ?? ''
+    const nextWebsiteUrl = client?.websiteUrl ?? ''
+
+    setLastSavedProfile({
+      businessName: nextBusinessName,
+      websiteUrl: nextWebsiteUrl,
+    })
+
+    if (!isEditing) {
+      setBusinessName(nextBusinessName)
+      setWebsiteUrl(nextWebsiteUrl)
+    }
+  }, [client?.businessName, client?.websiteUrl, isEditing])
 
   const handleEdit = () => {
     setError(null)
     setSuccess(null)
+    setBusinessName(lastSavedProfile.businessName)
+    setWebsiteUrl(lastSavedProfile.websiteUrl)
     setIsEditing(true)
   }
 
   const handleCancel = () => {
-    setBusinessName(client?.businessName ?? '')
-    setWebsiteUrl(client?.websiteUrl ?? '')
+    setBusinessName(lastSavedProfile.businessName)
+    setWebsiteUrl(lastSavedProfile.websiteUrl)
     setError(null)
     setSuccess(null)
     setIsEditing(false)
@@ -55,13 +71,30 @@ export function DashboardProfilePage() {
       return
     }
 
+    if (websiteUrl.trim()) {
+      try {
+        // Keep lightweight validation while preserving current API contract.
+        new URL(websiteUrl.trim())
+      } catch {
+        setError('Website URL must be a valid URL.')
+        return
+      }
+    }
+
     setSaving(true)
     try {
+      const nextBusinessName = businessName.trim()
+      const nextWebsiteUrl = websiteUrl.trim()
+
       await postDashboardProfile({
-        business_name: businessName.trim(),
-        website_url: websiteUrl.trim() || null,
+        business_name: nextBusinessName,
+        website_url: nextWebsiteUrl || null,
       })
 
+      setLastSavedProfile({
+        businessName: nextBusinessName,
+        websiteUrl: nextWebsiteUrl,
+      })
       await refreshMe()
       setSuccess('Profile updated successfully.')
       setIsEditing(false)

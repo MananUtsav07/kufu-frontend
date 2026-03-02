@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
+import { RequireChatbot } from '../components/RequireChatbot'
 import { useAuth } from '../lib/auth-context'
 import { ChatHistoryTable } from './components/ChatHistoryTable'
 import {
   ApiError,
-  getDashboardChatbots,
+  getChatbotByUser,
   getDashboardChatHistory,
   searchDashboardChatHistory,
   type DashboardChatHistoryRow,
@@ -25,7 +26,7 @@ type AppliedFilters = {
 const PAGE_SIZE = 20
 
 export function DashboardChatHistoryPage() {
-  const { plan, isAdmin } = useAuth()
+  const { plan, isAdmin, user } = useAuth()
   const hasChatHistoryAccess = useMemo(() => {
     if (isAdmin) {
       return true
@@ -41,6 +42,7 @@ export function DashboardChatHistoryPage() {
   const [accessDenied, setAccessDenied] = useState(false)
 
   const [chatbots, setChatbots] = useState<Array<{ id: string; name: string }>>([])
+  const [hasChatbot, setHasChatbot] = useState(false)
   const [selectedChatbotId, setSelectedChatbotId] = useState('')
 
   const [fromInput, setFromInput] = useState('')
@@ -57,11 +59,21 @@ export function DashboardChatHistoryPage() {
   useEffect(() => {
     let active = true
 
+    if (!hasChatHistoryAccess || !user?.id) {
+      setLoadingChatbots(false)
+      setChatbots([])
+      setHasChatbot(false)
+      setSelectedChatbotId('')
+      return () => {
+        active = false
+      }
+    }
+
     void (async () => {
       setLoadingChatbots(true)
       setError(null)
       try {
-        const response = await getDashboardChatbots()
+        const response = await getChatbotByUser(user.id)
         if (!active) {
           return
         }
@@ -71,6 +83,7 @@ export function DashboardChatHistoryPage() {
           name: chatbot.name,
         }))
 
+        setHasChatbot(response.hasChatbot)
         setChatbots(list)
         setSelectedChatbotId((current) => {
           if (current && list.some((item) => item.id === current)) {
@@ -93,7 +106,7 @@ export function DashboardChatHistoryPage() {
     return () => {
       active = false
     }
-  }, [])
+  }, [hasChatHistoryAccess, user?.id])
 
   useEffect(() => {
     let active = true
@@ -106,6 +119,13 @@ export function DashboardChatHistoryPage() {
 
     if (!hasChatHistoryAccess) {
       setAccessDenied(true)
+      setRows([])
+      setTotal(0)
+      return
+    }
+
+    if (!hasChatbot) {
+      setAccessDenied(false)
       setRows([])
       setTotal(0)
       return
@@ -165,7 +185,7 @@ export function DashboardChatHistoryPage() {
     return () => {
       active = false
     }
-  }, [appliedFilters, hasChatHistoryAccess, offset, selectedChatbotId])
+  }, [appliedFilters, hasChatHistoryAccess, hasChatbot, offset, selectedChatbotId])
 
   const canGoPrevious = offset > 0
   const canGoNext = offset + PAGE_SIZE < total
@@ -215,90 +235,6 @@ export function DashboardChatHistoryPage() {
         <p className="text-sm text-slate-400">Review visitor conversations, lead capture status, and timestamps.</p>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
-        <div className="grid gap-3 lg:grid-cols-[1fr_repeat(4,minmax(0,1fr))_auto_auto]">
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Chatbot</span>
-            <select
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100"
-              disabled={loadingChatbots || chatbots.length === 0}
-              value={selectedChatbotId}
-              onChange={(event) => {
-                setSelectedChatbotId(event.target.value)
-                setOffset(0)
-              }}
-            >
-              {chatbots.length === 0 ? <option value="">No chatbot</option> : null}
-              {chatbots.map((chatbot) => (
-                <option key={chatbot.id} value={chatbot.id}>
-                  {chatbot.name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">From</span>
-            <input
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100"
-              type="date"
-              value={fromInput}
-              onChange={(event) => setFromInput(event.target.value)}
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">To</span>
-            <input
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100"
-              type="date"
-              value={toInput}
-              onChange={(event) => setToInput(event.target.value)}
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Lead</span>
-            <select
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100"
-              value={leadInput}
-              onChange={(event) => setLeadInput(event.target.value as LeadFilter)}
-            >
-              <option value="all">All</option>
-              <option value="yes">Captured</option>
-              <option value="no">Not Captured</option>
-            </select>
-          </label>
-
-          <label className="block lg:col-span-2">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Search</span>
-            <input
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100"
-              placeholder="Search visitor message or bot response"
-              type="text"
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-            />
-          </label>
-
-          <button
-            className="self-end rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500"
-            type="button"
-            onClick={applyFilters}
-          >
-            Apply
-          </button>
-
-          <button
-            className="self-end rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/5"
-            type="button"
-            onClick={clearFilters}
-          >
-            Reset
-          </button>
-        </div>
-      </div>
-
       {accessDenied ? (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
           <p>Chat history is available on Starter and above.</p>
@@ -315,29 +251,123 @@ export function DashboardChatHistoryPage() {
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</div>
       ) : null}
 
-      <ChatHistoryTable rows={rows} loading={loadingRows} />
+      {!accessDenied ? (
+        loadingChatbots ? (
+          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 text-sm text-slate-400">Loading chatbots...</div>
+        ) : (
+          <RequireChatbot hasChatbot={hasChatbot}>
+            <div className="space-y-5">
+              <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+                <div className="grid gap-3 lg:grid-cols-[1fr_repeat(4,minmax(0,1fr))_auto_auto]">
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Chatbot</span>
+                    <select
+                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100"
+                      disabled={loadingChatbots || chatbots.length === 0}
+                      value={selectedChatbotId}
+                      onChange={(event) => {
+                        setSelectedChatbotId(event.target.value)
+                        setOffset(0)
+                      }}
+                    >
+                      {chatbots.length === 0 ? <option value="">No chatbot</option> : null}
+                      {chatbots.map((chatbot) => (
+                        <option key={chatbot.id} value={chatbot.id}>
+                          {chatbot.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-300">
-        <span>{pageLabel}</span>
-        <div className="flex items-center gap-2">
-          <button
-            className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!canGoPrevious || loadingRows}
-            type="button"
-            onClick={() => setOffset((current) => Math.max(0, current - PAGE_SIZE))}
-          >
-            Previous
-          </button>
-          <button
-            className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!canGoNext || loadingRows}
-            type="button"
-            onClick={() => setOffset((current) => current + PAGE_SIZE)}
-          >
-            Next
-          </button>
-        </div>
-      </div>
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">From</span>
+                    <input
+                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100"
+                      type="date"
+                      value={fromInput}
+                      onChange={(event) => setFromInput(event.target.value)}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">To</span>
+                    <input
+                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100"
+                      type="date"
+                      value={toInput}
+                      onChange={(event) => setToInput(event.target.value)}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Lead</span>
+                    <select
+                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100"
+                      value={leadInput}
+                      onChange={(event) => setLeadInput(event.target.value as LeadFilter)}
+                    >
+                      <option value="all">All</option>
+                      <option value="yes">Captured</option>
+                      <option value="no">Not Captured</option>
+                    </select>
+                  </label>
+
+                  <label className="block lg:col-span-2">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Search</span>
+                    <input
+                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100"
+                      placeholder="Search visitor message or bot response"
+                      type="text"
+                      value={searchInput}
+                      onChange={(event) => setSearchInput(event.target.value)}
+                    />
+                  </label>
+
+                  <button
+                    className="self-end rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500"
+                    type="button"
+                    onClick={applyFilters}
+                  >
+                    Apply
+                  </button>
+
+                  <button
+                    className="self-end rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/5"
+                    type="button"
+                    onClick={clearFilters}
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+
+              <ChatHistoryTable rows={rows} loading={loadingRows} />
+
+              <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-300">
+                <span>{pageLabel}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!canGoPrevious || loadingRows}
+                    type="button"
+                    onClick={() => setOffset((current) => Math.max(0, current - PAGE_SIZE))}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!canGoNext || loadingRows}
+                    type="button"
+                    onClick={() => setOffset((current) => current + PAGE_SIZE)}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          </RequireChatbot>
+        )
+      ) : null}
     </div>
   )
 }

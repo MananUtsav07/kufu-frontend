@@ -22,6 +22,9 @@ const pickLogoFile = (fileNames) => {
   const pick = (matcher) => lowerCaseNames.find(({ lowerCaseName }) => matcher(lowerCaseName))?.fileName
 
   return (
+    pick((name) => name === 'newlogo.png') ??
+    pick((name) => /^newlogo\.(png|jpg|jpeg|webp|avif|svg)$/.test(name)) ??
+    pick((name) => /^officiallogo\.(png|jpg|jpeg|webp|avif|svg)$/.test(name)) ??
     pick((name) => name === 'kufu-logo.png') ??
     pick((name) => /^kufu-logo\.(png|jpg|jpeg|webp|avif|svg)$/.test(name)) ??
     pick((name) => /^kufu.*\.(png|jpg|jpeg|webp|avif|svg)$/.test(name)) ??

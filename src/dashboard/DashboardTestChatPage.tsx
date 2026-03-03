@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { ChatbotTester } from './components/ChatbotTester'
 import { ApiError, getChatbotByUser, postDashboardTestChat } from '../lib/api'
 import { useAuth } from '../lib/auth-context'
+import { markDashboardSetupProgress } from '../lib/dashboard-setup-progress'
 
 import './DashboardTestChatPage.css'
 
@@ -72,6 +73,7 @@ export function DashboardTestChatPage() {
       sessionId,
       messages: trimmedHistory,
     })
+    markDashboardSetupProgress(user?.id, { testedAssistant: true })
 
     return response.reply
   }
@@ -87,7 +89,7 @@ export function DashboardTestChatPage() {
       <div>
         <h1 className="font-display text-2xl font-black text-white sm:text-3xl">Test Chat</h1>
         <p className="text-sm text-slate-400">
-          Preview responses with live knowledge retrieval. Test messages do not consume plan quota.
+          Preview responses with live knowledge retrieval. Test messages are counted in your normal plan usage.
         </p>
       </div>
 

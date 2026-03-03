@@ -693,7 +693,7 @@ export function postDashboardTestChat(
       content: string
     }>
   },
-): Promise<{ ok: true; reply: string; chatbotId: string }> {
+): Promise<{ ok: true; reply: string; chatbotId: string; usage?: Subscription | null }> {
   return requestJson(`/api/dashboard/test-chat/${encodeURIComponent(chatbotId)}`, {
     method: 'POST',
     body: payload,

@@ -9,6 +9,9 @@ const pickAsset = (matcher: (assetPath: string) => boolean): string | undefined 
   assetEntries.find(([assetPath]) => matcher(assetPath.toLowerCase()))?.[1]
 
 const preferredLogo =
+  pickAsset((assetPath) => assetPath.endsWith('/newlogo.png')) ??
+  pickAsset((assetPath) => /\/newlogo\.(png|jpg|jpeg|webp|avif|svg)$/.test(assetPath)) ??
+  pickAsset((assetPath) => /\/officiallogo\.(png|jpg|jpeg|webp|avif|svg)$/.test(assetPath)) ??
   pickAsset((assetPath) => assetPath.endsWith('/kufu-logo.png')) ??
   pickAsset((assetPath) => /\/kufu-logo\.(png|jpg|jpeg|webp|avif|svg)$/.test(assetPath)) ??
   pickAsset((assetPath) => /\/kufu.*\.(png|jpg|jpeg|webp|avif|svg)$/.test(assetPath)) ??
@@ -17,6 +20,8 @@ const preferredLogo =
   ''
 
 const preferredChatLogo =
+  pickAsset((assetPath) => assetPath.endsWith('/newlogo.png')) ??
+  pickAsset((assetPath) => /\/newlogo\.(png|jpg|jpeg|webp|avif|svg)$/.test(assetPath)) ??
   pickAsset((assetPath) => assetPath.endsWith('/small-logo.png')) ??
   pickAsset((assetPath) => /\/small-logo\.(png|jpg|jpeg|webp|avif|svg)$/.test(assetPath)) ??
   preferredLogo

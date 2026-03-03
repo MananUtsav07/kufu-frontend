@@ -7,6 +7,7 @@ import { AdminOverviewPage } from "./admin/AdminOverviewPage";
 import { AdminQuotesPage } from "./admin/AdminQuotesPage";
 import { AdminTicketsPage } from "./admin/AdminTicketsPage";
 import { AdminUsersPage } from "./admin/AdminUsersPage";
+import { GlobalFloatingChat } from "./components/GlobalFloatingChat";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { DashboardCustomQuotePage } from "./dashboard/DashboardCustomQuotePage";
 import { DashboardDevTestPage } from "./dashboard/DashboardDevTestPage";
@@ -166,6 +167,7 @@ function App() {
 
         <Route path="*" element={<Navigate replace to="/" />} />
       </Routes>
+      <GlobalFloatingChat />
     </>
   );
 }

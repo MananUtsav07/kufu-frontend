@@ -1,7 +1,8 @@
-﻿import { type FormEvent, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { ApiError, getWidgetConfig, streamChat } from '../lib/api'
+import { brandChatLogoSrc } from '../lib/brand'
 import './WidgetPage.css'
 
 type WidgetMessage = {
@@ -31,6 +32,7 @@ export function WidgetPage() {
   const [messages, setMessages] = useState<WidgetMessage[]>([])
 
   const sessionId = useMemo(() => `widget-${Date.now()}`, [])
+  const resolvedLogoUrl = logoUrl || brandChatLogoSrc
 
   useEffect(() => {
     let mounted = true
@@ -137,8 +139,8 @@ export function WidgetPage() {
       <header className="widget-header flex items-center justify-between border-b border-white/10 px-4 py-3">
         <div className="flex items-center gap-2">
           <div className="widget-logo-shell flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-slate-900">
-            {logoUrl ? (
-              <img alt={`${businessName} logo`} className="h-8 w-8 object-contain" src={logoUrl} />
+            {resolvedLogoUrl ? (
+              <img alt={`${businessName} logo`} className="h-8 w-8 object-contain" src={resolvedLogoUrl} />
             ) : (
               <span className="text-xs font-semibold text-indigo-200">AI</span>
             )}
@@ -201,3 +203,4 @@ export function WidgetPage() {
     </div>
   )
 }
+

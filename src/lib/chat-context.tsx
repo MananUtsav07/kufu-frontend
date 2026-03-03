@@ -23,6 +23,7 @@ type ChatContextValue = {
   sendMessage: (content: string) => void
   retryLastResponse: () => void
   clearChat: () => void
+  primeAssistantMessage: (content: string) => void
 }
 
 const ChatContext = createContext<ChatContextValue | null>(null)
@@ -186,6 +187,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     failedPayloadRef.current = null
   }, [])
 
+  const primeAssistantMessage = useCallback((content: string) => {
+    const normalized = content.trim()
+    setMessages([
+      createMessage(
+        'assistant',
+        normalized.length > 0 ? normalized : DEFAULT_ASSISTANT_MESSAGE,
+      ),
+    ])
+    setError(null)
+    setIsTyping(false)
+    failedPayloadRef.current = null
+  }, [])
+
   const value = useMemo<ChatContextValue>(
     () => ({
       messages,
@@ -195,8 +209,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       sendMessage,
       retryLastResponse,
       clearChat,
+      primeAssistantMessage,
     }),
-    [clearChat, error, isTyping, messages, retryLastResponse, sendMessage],
+    [clearChat, error, isTyping, messages, primeAssistantMessage, retryLastResponse, sendMessage],
   )
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>

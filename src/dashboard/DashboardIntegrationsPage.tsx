@@ -1,6 +1,9 @@
-import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { type ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { useAuth } from '../lib/auth-context'
+import { markDashboardSetupProgress } from '../lib/dashboard-setup-progress'
+import { brandChatLogoSrc } from '../lib/brand'
 import {
   ApiError,
   deleteDashboardChatbot,
@@ -24,7 +27,7 @@ const STARTER_PLUS_PLANS = new Set(['starter', 'pro', 'business'])
 const DEFAULT_SYNC_MAX_PAGES = 60
 
 export function DashboardIntegrationsPage() {
-  const { plan, isAdmin } = useAuth()
+  const { user, plan, isAdmin } = useAuth()
   const currentPlanCode = typeof plan?.code === 'string' ? plan.code.toLowerCase() : 'free'
   const canUploadAssets = useMemo(() => {
     if (isAdmin) {
@@ -33,6 +36,17 @@ export function DashboardIntegrationsPage() {
 
     return STARTER_PLUS_PLANS.has(currentPlanCode)
   }, [currentPlanCode, isAdmin])
+  const integrationLimit = useMemo(() => {
+    if (isAdmin) {
+      return Number.MAX_SAFE_INTEGER
+    }
+
+    if (typeof plan?.chatbot_limit === 'number' && plan.chatbot_limit > 0) {
+      return plan.chatbot_limit
+    }
+
+    return currentPlanCode === 'business' ? 10 : 1
+  }, [currentPlanCode, isAdmin, plan?.chatbot_limit])
 
   const [chatbots, setChatbots] = useState<DashboardChatbot[]>([])
   const [loading, setLoading] = useState(true)
@@ -48,7 +62,23 @@ export function DashboardIntegrationsPage() {
   const [ragStatusByRun, setRagStatusByRun] = useState<Record<string, RagIngestionRun>>({})
   const [ragActionBusy, setRagActionBusy] = useState<Record<string, boolean>>({})
   const [ragUrlsText, setRagUrlsText] = useState('')
+  const [toast, setToast] = useState<{ message: string; tone: 'info' | 'success' | 'error' } | null>(null)
   const copyResetTimersRef = useRef<Record<string, number>>({})
+  const toastResetTimerRef = useRef<number | null>(null)
+  const isIntegrationLimitReached = !isAdmin && chatbots.length >= integrationLimit
+  const isFreeLimitReached = currentPlanCode === 'free' && isIntegrationLimitReached
+
+  const showToast = useCallback((message: string, tone: 'info' | 'success' | 'error' = 'info') => {
+    if (toastResetTimerRef.current) {
+      window.clearTimeout(toastResetTimerRef.current)
+    }
+
+    setToast({ message, tone })
+    toastResetTimerRef.current = window.setTimeout(() => {
+      setToast(null)
+      toastResetTimerRef.current = null
+    }, 2400)
+  }, [])
 
   const loadChatbotLogos = async (items: DashboardChatbot[]) => {
     if (items.length === 0) {
@@ -97,6 +127,9 @@ export function DashboardIntegrationsPage() {
       Object.values(copyResetTimersRef.current).forEach((timerId) => {
         window.clearTimeout(timerId)
       })
+      if (toastResetTimerRef.current) {
+        window.clearTimeout(toastResetTimerRef.current)
+      }
     }
   }, [])
 
@@ -145,6 +178,12 @@ export function DashboardIntegrationsPage() {
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
+
+    if (isIntegrationLimitReached) {
+      setError(`Integration limit reached (${integrationLimit}). Upgrade your plan to add more integrations.`)
+      showToast('Integration limit reached. Upgrade to add more.', 'info')
+      return
+    }
 
     if (!newName.trim()) {
       setError('Chatbot name is required.')
@@ -218,6 +257,7 @@ export function DashboardIntegrationsPage() {
       const response = await getDashboardEmbed(chatbotId)
       setSnippetMap((current) => ({ ...current, [chatbotId]: response.snippet }))
       setCopiedSnippetByChatbot((current) => ({ ...current, [chatbotId]: false }))
+      markDashboardSetupProgress(user?.id, { loadedSnippet: true })
     } catch (snippetError) {
       setError(snippetError instanceof ApiError ? snippetError.message : 'Failed to load embed snippet.')
     }
@@ -321,8 +361,16 @@ export function DashboardIntegrationsPage() {
           updatedAt: new Date().toISOString(),
         },
       }))
+      markDashboardSetupProgress(user?.id, { syncedWebsite: true })
+      showToast(
+        mode === 'resync'
+          ? `${chatbot.name}: re-sync started.`
+          : `${chatbot.name}: website sync started.`,
+        'success',
+      )
     } catch (ingestError) {
       setError(ingestError instanceof ApiError ? ingestError.message : 'Failed to start website sync.')
+      showToast('Could not start sync. Please try again.', 'error')
     } finally {
       setRagActionBusy((current) => ({ ...current, [chatbot.id]: false }))
     }
@@ -338,8 +386,10 @@ export function DashboardIntegrationsPage() {
     setRagActionBusy((current) => ({ ...current, [chatbotId]: true }))
     try {
       await postRagIngestCancel(runId)
+      showToast('Sync cancellation requested.', 'info')
     } catch (cancelError) {
       setError(cancelError instanceof ApiError ? cancelError.message : 'Failed to cancel sync.')
+      showToast('Could not cancel sync. Please try again.', 'error')
     } finally {
       setRagActionBusy((current) => ({ ...current, [chatbotId]: false }))
     }
@@ -352,9 +402,43 @@ export function DashboardIntegrationsPage() {
         <p className="text-sm text-slate-400">Create chatbots, manage logos, and copy installation snippets.</p>
       </div>
 
+      <section className="rounded-2xl border border-indigo-500/25 bg-gradient-to-br from-indigo-500/15 via-slate-900/70 to-cyan-500/10 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-200">Quick Setup Path</p>
+            <p className="mt-1 text-sm text-slate-200">
+              1. Create integration  2. Sync website  3. Load snippet  4. Test chatbot
+            </p>
+          </div>
+          <button
+            className="rounded-lg border border-indigo-400/35 bg-indigo-500/15 px-3 py-1.5 text-xs font-semibold text-indigo-100 transition-colors hover:bg-indigo-500/25"
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          >
+            Start Here
+          </button>
+        </div>
+      </section>
+
       {!isAdmin && currentPlanCode === 'free' && chatbots.length > 0 ? (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
           Upgrade to Starter or above to upload chatbot logo
+        </div>
+      ) : null}
+
+      {isIntegrationLimitReached ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <p className="text-sm text-amber-200">
+            {isFreeLimitReached
+              ? 'Free plan includes 1 integration. Upgrade your plan to add more integrations.'
+              : `You have reached your integration limit (${integrationLimit}). Upgrade to add more integrations.`}
+          </p>
+          <Link
+            className="rounded-lg border border-amber-300/40 bg-amber-400/20 px-3 py-1.5 text-xs font-semibold text-amber-100 transition-colors hover:bg-amber-400/30"
+            to="/dashboard/upgrade"
+          >
+            Upgrade Plan
+          </Link>
         </div>
       ) : null}
 
@@ -364,60 +448,104 @@ export function DashboardIntegrationsPage() {
         </div>
       ) : null}
 
-      <form className="integrations-create rounded-2xl border border-white/10 bg-slate-900/70 p-4" onSubmit={handleCreate}>
-        <h2 className="text-sm font-semibold text-white">Create Integration</h2>
-        <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
-          <input
-            className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
-            placeholder="Chatbot name"
-            type="text"
-            value={newName}
-            onChange={(event) => setNewName(event.target.value)}
-          />
-          <input
-            className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
-            placeholder="https://example.com"
-            type="url"
-            value={newWebsiteUrl}
-            onChange={(event) => setNewWebsiteUrl(event.target.value)}
-          />
-          <button
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
-            disabled={creating}
-            type="submit"
-          >
-            {creating ? 'Creating...' : 'Create'}
-          </button>
+      {toast ? (
+        <div
+          className={`rounded-xl border px-4 py-2 text-sm ${
+            toast.tone === 'success'
+              ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-200'
+              : toast.tone === 'error'
+                ? 'border-rose-500/35 bg-rose-500/10 text-rose-200'
+                : 'border-sky-500/35 bg-sky-500/10 text-sky-200'
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          {toast.message}
         </div>
-        <div className="mt-3 space-y-2">
-          <label className="text-xs text-slate-400" htmlFor="rag-urls-input">
-            Optional URLs to ingest directly (one per line, public pages only)
-          </label>
-          <textarea
-            className="min-h-[90px] w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-slate-200"
-            id="rag-urls-input"
-            placeholder={'https://example.com/about\nhttps://example.com/services'}
-            value={ragUrlsText}
-            onChange={(event) => setRagUrlsText(event.target.value)}
-          />
-          <p className="text-[11px] text-slate-500">
-            For private/dashboard pages that require login, add content in Knowledge Base instead.
-          </p>
-        </div>
-      </form>
+      ) : null}
+
+      {!isIntegrationLimitReached ? (
+        <form className="integrations-create rounded-2xl border border-white/10 bg-slate-900/70 p-4" onSubmit={handleCreate}>
+          <h2 className="text-sm font-semibold text-white">Create Integration</h2>
+          <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+            <input
+              className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+              placeholder="Chatbot name"
+              type="text"
+              value={newName}
+              onChange={(event) => setNewName(event.target.value)}
+            />
+            <input
+              className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+              placeholder="https://example.com"
+              type="url"
+              value={newWebsiteUrl}
+              onChange={(event) => setNewWebsiteUrl(event.target.value)}
+            />
+            <button
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={creating}
+              type="submit"
+            >
+              {creating ? 'Creating...' : 'Create'}
+            </button>
+          </div>
+          <div className="mt-2 grid gap-2 text-[11px] text-slate-400 md:grid-cols-2">
+            <p>Tip: use a clear bot name like <span className="font-semibold text-slate-300">Sales Assistant</span>.</p>
+            <p>Tip: website URL should be your public homepage for better crawling.</p>
+          </div>
+          <div className="mt-3 space-y-2">
+            <label className="text-xs text-slate-400" htmlFor="rag-urls-input">
+              Optional additional page URLs to crawl (one URL per line, public pages only)
+            </label>
+            <textarea
+              className="min-h-[90px] w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-slate-200"
+              id="rag-urls-input"
+              placeholder={'https://example.com/pricing\nhttps://example.com/blog/how-it-works'}
+              value={ragUrlsText}
+              onChange={(event) => setRagUrlsText(event.target.value)}
+            />
+            <p className="text-[11px] text-slate-500">
+              Use this to include specific extra pages in the crawl in addition to the main website URL.
+            </p>
+            <p className="text-[11px] text-slate-500">
+              For private/dashboard pages that require login, add content in Knowledge Base instead.
+            </p>
+          </div>
+        </form>
+      ) : null}
 
       <div className="space-y-3">
         {loading ? (
           <p className="text-sm text-slate-400">Loading integrations...</p>
         ) : chatbots.length === 0 ? (
-          <p className="text-sm text-slate-400">No integrations configured yet.</p>
+          <div className="rounded-2xl border border-dashed border-white/15 bg-slate-900/60 p-6 text-center">
+            <p className="text-sm font-semibold text-slate-200">No integrations yet</p>
+            <p className="mt-1 text-sm text-slate-400">
+              Create your first chatbot integration above, then copy and install the snippet on your website.
+            </p>
+          </div>
         ) : (
           chatbots.map((chatbot) => {
             const runId = ragRunByChatbot[chatbot.id]
             const run = runId ? ragStatusByRun[runId] : null
             const logoUrl = logoUrlByChatbot[chatbot.id] ?? null
+            const displayLogoUrl = logoUrl || brandChatLogoSrc
             const logoBusy = Boolean(logoBusyByChatbot[chatbot.id])
             const uploadInputId = `chatbot-logo-${chatbot.id}`
+            const hasWebsite = Boolean(chatbot.website_url?.trim())
+            const hasAllowedDomains = chatbot.allowed_domains.length > 0
+            const snippetLoaded = Boolean(snippetMap[chatbot.id])
+            const hasLogo = Boolean(logoUrl)
+            const actionBusy = Boolean(ragActionBusy[chatbot.id])
+            const syncStatusLabel =
+              run?.status === 'done'
+                ? 'Synced'
+                : run?.status === 'running'
+                  ? 'Syncing'
+                  : run?.status === 'failed'
+                    ? 'Sync Failed'
+                    : 'Not Synced'
 
             return (
               <article key={chatbot.id} className="integration-card rounded-2xl border border-white/10 bg-slate-900/70 p-4">
@@ -434,8 +562,8 @@ export function DashboardIntegrationsPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <div className="integration-logo-shell flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-slate-950/80">
-                      {logoUrl ? (
-                        <img alt={`${chatbot.name} logo`} className="h-11 w-11 object-contain" src={logoUrl} />
+                      {displayLogoUrl ? (
+                        <img alt={`${chatbot.name} logo`} className="h-11 w-11 object-contain" src={displayLogoUrl} />
                       ) : (
                         <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">No Logo</span>
                       )}
@@ -462,6 +590,55 @@ export function DashboardIntegrationsPage() {
                       Delete
                     </button>
                   </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${
+                    chatbot.is_active
+                      ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-200'
+                      : 'border-rose-500/35 bg-rose-500/10 text-rose-200'
+                  }`}>
+                    {chatbot.is_active ? 'Live' : 'Paused'}
+                  </span>
+                  <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${
+                    hasWebsite
+                      ? 'border-sky-500/35 bg-sky-500/10 text-sky-200'
+                      : 'border-amber-500/35 bg-amber-500/10 text-amber-200'
+                  }`}>
+                    {hasWebsite ? 'Website Linked' : 'Website Missing'}
+                  </span>
+                  <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${
+                    hasAllowedDomains
+                      ? 'border-indigo-500/35 bg-indigo-500/10 text-indigo-200'
+                      : 'border-amber-500/35 bg-amber-500/10 text-amber-200'
+                  }`}>
+                    {hasAllowedDomains ? 'Domain Guard Set' : 'Domain Guard Open'}
+                  </span>
+                  <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${
+                    hasLogo
+                      ? 'border-violet-500/35 bg-violet-500/10 text-violet-200'
+                      : 'border-slate-500/35 bg-slate-800/70 text-slate-300'
+                  }`}>
+                    {hasLogo ? 'Logo Uploaded' : 'Default Logo'}
+                  </span>
+                  <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${
+                    snippetLoaded
+                      ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-200'
+                      : 'border-slate-500/35 bg-slate-800/70 text-slate-300'
+                  }`}>
+                    {snippetLoaded ? 'Snippet Ready' : 'Load Snippet'}
+                  </span>
+                  <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${
+                    syncStatusLabel === 'Synced'
+                      ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-200'
+                      : syncStatusLabel === 'Syncing'
+                        ? 'border-sky-500/35 bg-sky-500/10 text-sky-200'
+                        : syncStatusLabel === 'Sync Failed'
+                          ? 'border-rose-500/35 bg-rose-500/10 text-rose-200'
+                          : 'border-slate-500/35 bg-slate-800/70 text-slate-300'
+                  }`}>
+                    {syncStatusLabel}
+                  </span>
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -503,24 +680,24 @@ export function DashboardIntegrationsPage() {
 
                   <button
                     className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
-                    disabled={Boolean(ragActionBusy[chatbot.id])}
+                    disabled={actionBusy}
                     type="button"
                     onClick={() => triggerIngestion(chatbot, 'start')}
                   >
-                    Sync Website
+                    {actionBusy ? 'Starting...' : 'Sync Website'}
                   </button>
                   <button
                     className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-70"
-                    disabled={Boolean(ragActionBusy[chatbot.id])}
+                    disabled={actionBusy}
                     type="button"
                     onClick={() => triggerIngestion(chatbot, 'resync')}
                   >
-                    Re-sync
+                    {actionBusy ? 'Starting...' : 'Re-sync'}
                   </button>
                   {run && run.status === 'running' ? (
                     <button
                       className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition-colors hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-70"
-                      disabled={Boolean(ragActionBusy[chatbot.id])}
+                      disabled={actionBusy}
                       type="button"
                       onClick={() => cancelIngestion(chatbot.id)}
                     >
@@ -534,6 +711,28 @@ export function DashboardIntegrationsPage() {
                   >
                     Load Embed Snippet
                   </button>
+                </div>
+
+                <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/60 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Widget Preview</p>
+                  <div className="mt-2 rounded-xl border border-white/10 bg-slate-900/80 p-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-indigo-500/20 text-[11px] font-semibold text-indigo-200">
+                        {displayLogoUrl ? (
+                          <img alt={`${chatbot.name} widget logo`} className="h-full w-full object-cover" src={displayLogoUrl} />
+                        ) : (
+                          chatbot.name.slice(0, 2).toUpperCase()
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{chatbot.name}</p>
+                        <p className="text-[11px] text-slate-400">Powered by Kufu</p>
+                      </div>
+                    </div>
+                    <div className="mt-2 inline-block max-w-[90%] rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-xs text-slate-200">
+                      Hi, I&apos;m {chatbot.name}. How can I help you today?
+                    </div>
+                  </div>
                 </div>
 
                 {snippetMap[chatbot.id] ? (

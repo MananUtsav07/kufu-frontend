@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { ApiError, postDashboardProfile } from '../lib/api'
 import { useAuth } from '../lib/auth-context'
@@ -57,9 +57,10 @@ export function DashboardProfilePage() {
     setIsEditing(false)
   }
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const hasChanges =
+    businessName.trim() !== lastSavedProfile.businessName || websiteUrl.trim() !== lastSavedProfile.websiteUrl
 
+  const handleSave = async () => {
     if (!isEditing) {
       return
     }
@@ -140,7 +141,7 @@ export function DashboardProfilePage() {
       <section className="profile-card rounded-2xl border border-white/10 bg-slate-900/70 p-5">
         <h2 className="mb-4 text-sm font-semibold text-white">Business Details</h2>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <div className="space-y-4">
           <label className="block">
             <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
               Business Name
@@ -195,9 +196,19 @@ export function DashboardProfilePage() {
             <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
               Email
             </span>
-            <div className="profile-readonly flex h-11 w-full items-center rounded-lg border border-white/10 bg-white/[0.03] px-3 text-sm text-slate-200">
-              {user?.email || '-'}
-            </div>
+            {isEditing ? (
+              <input
+                className="profile-input h-11 w-full cursor-not-allowed rounded-lg border border-white/10 bg-white/[0.03] px-3 text-sm text-slate-400"
+                disabled
+                readOnly
+                type="email"
+                value={user?.email || ''}
+              />
+            ) : (
+              <div className="profile-readonly flex h-11 w-full items-center rounded-lg border border-white/10 bg-white/[0.03] px-3 text-sm text-slate-200">
+                {user?.email || '-'}
+              </div>
+            )}
           </label>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -213,8 +224,9 @@ export function DashboardProfilePage() {
               <>
                 <button
                   className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
-                  disabled={saving}
-                  type="submit"
+                  disabled={saving || !hasChanges}
+                  type="button"
+                  onClick={handleSave}
                 >
                   {saving ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -229,7 +241,7 @@ export function DashboardProfilePage() {
               </>
             )}
           </div>
-        </form>
+        </div>
       </section>
     </div>
   )

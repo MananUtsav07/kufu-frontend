@@ -11,8 +11,8 @@ import {
   getDashboardChatbotLogo,
   getDashboardChatbots,
   getDashboardEmbed,
+  getRagIngestLatest,
   getRagIngestStatus,
-  patchDashboardChatbot,
   postDashboardChatbot,
   postDashboardChatbotLogo,
   postRagIngestCancel,
@@ -111,6 +111,30 @@ export function DashboardIntegrationsPage() {
       const response = await getDashboardChatbots()
       setChatbots(response.chatbots)
       await loadChatbotLogos(response.chatbots)
+
+      const latestRuns = await Promise.all(
+        response.chatbots.map(async (chatbot) => {
+          try {
+            const latest = await getRagIngestLatest(chatbot.id)
+            return [chatbot.id, latest.run] as const
+          } catch {
+            return [chatbot.id, null] as const
+          }
+        }),
+      )
+
+      const nextRunByChatbot: Record<string, string> = {}
+      const nextStatusByRun: Record<string, RagIngestionRun> = {}
+      for (const [chatbotId, run] of latestRuns) {
+        if (!run) {
+          continue
+        }
+        nextRunByChatbot[chatbotId] = run.runId
+        nextStatusByRun[run.runId] = run
+      }
+
+      setRagRunByChatbot(nextRunByChatbot)
+      setRagStatusByRun(nextStatusByRun)
     } catch (loadError) {
       setError(loadError instanceof ApiError ? loadError.message : 'Failed to load chatbots.')
     } finally {
@@ -203,21 +227,6 @@ export function DashboardIntegrationsPage() {
       setError(createError instanceof ApiError ? createError.message : 'Failed to create chatbot.')
     } finally {
       setCreating(false)
-    }
-  }
-
-  const toggleActive = async (chatbot: DashboardChatbot) => {
-    setError(null)
-    try {
-      const response = await patchDashboardChatbot(chatbot.id, {
-        is_active: !chatbot.is_active,
-      })
-
-      setChatbots((current) =>
-        current.map((item) => (item.id === chatbot.id ? response.chatbot : item)),
-      )
-    } catch (updateError) {
-      setError(updateError instanceof ApiError ? updateError.message : 'Failed to update chatbot.')
     }
   }
 
@@ -575,13 +584,6 @@ export function DashboardIntegrationsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
-                      className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/5"
-                      type="button"
-                      onClick={() => toggleActive(chatbot)}
-                    >
-                      {chatbot.is_active ? 'Deactivate' : 'Activate'}
-                    </button>
                     <button
                       className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-300 transition-colors hover:bg-red-500/20"
                       type="button"

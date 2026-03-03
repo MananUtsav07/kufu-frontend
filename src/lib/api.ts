@@ -740,6 +740,10 @@ export function getRagIngestStatus(runId: string): Promise<{ ok: true; run: RagI
   return requestJson(`/api/rag/ingest/status?runId=${encodeURIComponent(runId)}`)
 }
 
+export function getRagIngestLatest(chatbotId: string): Promise<{ ok: true; run: RagIngestionRun | null }> {
+  return requestJson(`/api/rag/ingest/latest?chatbotId=${encodeURIComponent(chatbotId)}`)
+}
+
 export function postRagIngestCancel(runId: string): Promise<{ ok: true; runId: string; status: 'cancel_requested' }> {
   return requestJson('/api/rag/ingest/cancel', {
     body: { runId },

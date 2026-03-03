@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { RequireChatbot } from '../components/RequireChatbot'
 import { useAuth } from '../lib/auth-context'
-import { ChatHistoryTable } from './components/ChatHistoryTable'
+import { formatDateTime } from '../lib/utils'
 import {
   ApiError,
   getChatbotByUser,
@@ -23,7 +23,15 @@ type AppliedFilters = {
   searchText?: string
 }
 
-const PAGE_SIZE = 20
+type VisitorHistoryItem = {
+  visitorId: string
+  latestAt: string
+  lastUserMessage: string
+  messageCount: number
+  hadLeadCapture: boolean
+}
+
+const HISTORY_FETCH_LIMIT = 200
 
 export function DashboardChatHistoryPage() {
   const { plan, isAdmin, user } = useAuth()
@@ -44,17 +52,15 @@ export function DashboardChatHistoryPage() {
   const [chatbots, setChatbots] = useState<Array<{ id: string; name: string }>>([])
   const [hasChatbot, setHasChatbot] = useState(false)
   const [selectedChatbotId, setSelectedChatbotId] = useState('')
+  const [selectedVisitorId, setSelectedVisitorId] = useState('')
 
   const [fromInput, setFromInput] = useState('')
   const [toInput, setToInput] = useState('')
   const [leadInput, setLeadInput] = useState<LeadFilter>('all')
   const [searchInput, setSearchInput] = useState('')
-
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters>({})
-  const [offset, setOffset] = useState(0)
 
   const [rows, setRows] = useState<DashboardChatHistoryRow[]>([])
-  const [total, setTotal] = useState(0)
 
   useEffect(() => {
     let active = true
@@ -113,21 +119,18 @@ export function DashboardChatHistoryPage() {
 
     if (!selectedChatbotId) {
       setRows([])
-      setTotal(0)
       return
     }
 
     if (!hasChatHistoryAccess) {
       setAccessDenied(true)
       setRows([])
-      setTotal(0)
       return
     }
 
     if (!hasChatbot) {
       setAccessDenied(false)
       setRows([])
-      setTotal(0)
       return
     }
 
@@ -145,15 +148,15 @@ export function DashboardChatHistoryPage() {
               from: appliedFilters.from,
               to: appliedFilters.to,
               leadCaptured: appliedFilters.leadCaptured,
-              limit: PAGE_SIZE,
-              offset,
+              limit: HISTORY_FETCH_LIMIT,
+              offset: 0,
             })
           : await getDashboardChatHistory(selectedChatbotId, {
               from: appliedFilters.from,
               to: appliedFilters.to,
               leadCaptured: appliedFilters.leadCaptured,
-              limit: PAGE_SIZE,
-              offset,
+              limit: HISTORY_FETCH_LIMIT,
+              offset: 0,
             })
 
         if (!active) {
@@ -161,7 +164,6 @@ export function DashboardChatHistoryPage() {
         }
 
         setRows(response.rows)
-        setTotal(response.pagination.total)
       } catch (loadError) {
         if (!active) {
           return
@@ -170,7 +172,6 @@ export function DashboardChatHistoryPage() {
         if (loadError instanceof ApiError && loadError.status === 403) {
           setAccessDenied(true)
           setRows([])
-          setTotal(0)
           return
         }
 
@@ -185,19 +186,52 @@ export function DashboardChatHistoryPage() {
     return () => {
       active = false
     }
-  }, [appliedFilters, hasChatHistoryAccess, hasChatbot, offset, selectedChatbotId])
+  }, [appliedFilters, hasChatHistoryAccess, hasChatbot, selectedChatbotId])
 
-  const canGoPrevious = offset > 0
-  const canGoNext = offset + PAGE_SIZE < total
+  const visitors = useMemo<VisitorHistoryItem[]>(() => {
+    const grouped = new Map<string, VisitorHistoryItem>()
 
-  const pageLabel = useMemo(() => {
-    if (total === 0) {
-      return '0 of 0'
+    for (const row of rows) {
+      const existing = grouped.get(row.visitor_id)
+      if (!existing) {
+        grouped.set(row.visitor_id, {
+          visitorId: row.visitor_id,
+          latestAt: row.created_at,
+          lastUserMessage: row.user_message,
+          messageCount: 1,
+          hadLeadCapture: row.lead_captured,
+        })
+        continue
+      }
+
+      existing.messageCount += 1
+      existing.hadLeadCapture = existing.hadLeadCapture || row.lead_captured
     }
-    const start = offset + 1
-    const end = Math.min(offset + PAGE_SIZE, total)
-    return `${start}-${end} of ${total}`
-  }, [offset, total])
+
+    return Array.from(grouped.values())
+  }, [rows])
+
+  useEffect(() => {
+    setSelectedVisitorId((current) => {
+      if (current && visitors.some((item) => item.visitorId === current)) {
+        return current
+      }
+      return visitors[0]?.visitorId ?? ''
+    })
+  }, [visitors])
+
+  const selectedVisitorRows = useMemo(() => {
+    if (!selectedVisitorId) {
+      return []
+    }
+
+    return rows
+      .filter((row) => row.visitor_id === selectedVisitorId)
+      .sort(
+        (left, right) =>
+          new Date(left.created_at).getTime() - new Date(right.created_at).getTime(),
+      )
+  }, [rows, selectedVisitorId])
 
   const applyFilters = () => {
     const nextFilters: AppliedFilters = {}
@@ -215,7 +249,6 @@ export function DashboardChatHistoryPage() {
       nextFilters.searchText = searchInput.trim()
     }
 
-    setOffset(0)
     setAppliedFilters(nextFilters)
   }
 
@@ -224,7 +257,6 @@ export function DashboardChatHistoryPage() {
     setToInput('')
     setLeadInput('all')
     setSearchInput('')
-    setOffset(0)
     setAppliedFilters({})
   }
 
@@ -232,7 +264,9 @@ export function DashboardChatHistoryPage() {
     <div className="dashboard-chat-history space-y-5">
       <div>
         <h1 className="font-display text-2xl font-black text-white sm:text-3xl">Chat History</h1>
-        <p className="text-sm text-slate-400">Review visitor conversations, lead capture status, and timestamps.</p>
+        <p className="text-sm text-slate-400">
+          Browse visitors first, then open each visitor conversation timeline.
+        </p>
       </div>
 
       {accessDenied ? (
@@ -248,12 +282,16 @@ export function DashboardChatHistoryPage() {
       ) : null}
 
       {error ? (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</div>
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {error}
+        </div>
       ) : null}
 
       {!accessDenied ? (
         loadingChatbots ? (
-          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 text-sm text-slate-400">Loading chatbots...</div>
+          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 text-sm text-slate-400">
+            Loading chatbots...
+          </div>
         ) : (
           <RequireChatbot hasChatbot={hasChatbot}>
             <div className="space-y-5">
@@ -267,7 +305,7 @@ export function DashboardChatHistoryPage() {
                       value={selectedChatbotId}
                       onChange={(event) => {
                         setSelectedChatbotId(event.target.value)
-                        setOffset(0)
+                        setSelectedVisitorId('')
                       }}
                     >
                       {chatbots.length === 0 ? <option value="">No chatbot</option> : null}
@@ -341,28 +379,99 @@ export function DashboardChatHistoryPage() {
                 </div>
               </div>
 
-              <ChatHistoryTable rows={rows} loading={loadingRows} />
+              <div className="grid gap-4 xl:grid-cols-[320px_1fr]">
+                <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-white">Visitors</p>
+                    <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-slate-300">
+                      {visitors.length}
+                    </span>
+                  </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-300">
-                <span>{pageLabel}</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={!canGoPrevious || loadingRows}
-                    type="button"
-                    onClick={() => setOffset((current) => Math.max(0, current - PAGE_SIZE))}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={!canGoNext || loadingRows}
-                    type="button"
-                    onClick={() => setOffset((current) => current + PAGE_SIZE)}
-                  >
-                    Next
-                  </button>
-                </div>
+                  <div className="space-y-2">
+                    {loadingRows ? (
+                      <p className="rounded-xl border border-white/10 bg-white/[0.02] px-3 py-6 text-center text-sm text-slate-400">
+                        Loading visitors...
+                      </p>
+                    ) : visitors.length === 0 ? (
+                      <p className="rounded-xl border border-white/10 bg-white/[0.02] px-3 py-6 text-center text-sm text-slate-400">
+                        No visitors found for the selected filters.
+                      </p>
+                    ) : (
+                      visitors.map((visitor) => (
+                        <button
+                          key={visitor.visitorId}
+                          className={`w-full rounded-xl border px-3 py-2 text-left transition-colors ${
+                            selectedVisitorId === visitor.visitorId
+                              ? 'border-indigo-500/40 bg-indigo-500/15'
+                              : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.04]'
+                          }`}
+                          type="button"
+                          onClick={() => setSelectedVisitorId(visitor.visitorId)}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="truncate font-mono text-[11px] text-slate-200">{visitor.visitorId}</p>
+                            <span className="text-[10px] text-slate-500">{visitor.messageCount} msgs</span>
+                          </div>
+                          <p className="mt-1 line-clamp-2 text-xs text-slate-400">{visitor.lastUserMessage}</p>
+                          <p className="mt-1 text-[11px] text-slate-500">{formatDateTime(visitor.latestAt)}</p>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </section>
+
+                <section className="rounded-2xl border border-white/10 bg-slate-900/70">
+                  <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">Conversation</p>
+                      <p className="font-mono text-[11px] text-slate-400">{selectedVisitorId || 'Select a visitor'}</p>
+                    </div>
+                  </div>
+
+                  <div className="max-h-[640px] space-y-3 overflow-y-auto p-4">
+                    {loadingRows ? (
+                      <p className="rounded-xl border border-white/10 bg-white/[0.02] px-3 py-6 text-center text-sm text-slate-400">
+                        Loading conversation...
+                      </p>
+                    ) : !selectedVisitorId ? (
+                      <p className="rounded-xl border border-white/10 bg-white/[0.02] px-3 py-6 text-center text-sm text-slate-400">
+                        Select a visitor to view chat history.
+                      </p>
+                    ) : selectedVisitorRows.length === 0 ? (
+                      <p className="rounded-xl border border-white/10 bg-white/[0.02] px-3 py-6 text-center text-sm text-slate-400">
+                        No chat messages found for this visitor.
+                      </p>
+                    ) : (
+                      selectedVisitorRows.map((row) => (
+                        <article key={row.id} className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                          <div className="rounded-lg bg-indigo-500/10 p-3">
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-indigo-200">Visitor</p>
+                            <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-100">{row.user_message}</p>
+                          </div>
+
+                          <div className="mt-2 rounded-lg border border-white/10 bg-slate-950/70 p-3">
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Assistant</p>
+                            <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-300">{row.bot_response}</p>
+                          </div>
+
+                          <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-slate-500">
+                            <span
+                              className={`inline-flex rounded-full border px-2 py-0.5 font-semibold ${
+                                row.lead_captured
+                                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                                  : 'border-slate-500/40 bg-slate-500/10 text-slate-300'
+                              }`}
+                            >
+                              {row.lead_captured ? 'Lead Captured' : 'No Lead'}
+                            </span>
+                            <span>{formatDateTime(row.created_at)}</span>
+                          </div>
+                        </article>
+                      ))
+                    )}
+                  </div>
+                </section>
               </div>
             </div>
           </RequireChatbot>

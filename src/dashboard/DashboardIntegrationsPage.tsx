@@ -11,14 +11,19 @@ import {
   getDashboardChatbotLogo,
   getDashboardChatbots,
   getDashboardEmbed,
+  getDashboardWhatsAppIntegration,
   getRagIngestLatest,
   getRagIngestStatus,
+  postDashboardWhatsAppConnect,
   postDashboardChatbot,
   postDashboardChatbotLogo,
+  postDashboardWhatsAppTestMessage,
   postRagIngestCancel,
   postRagIngestResync,
   postRagIngestStart,
+  deleteDashboardWhatsAppIntegration,
   type DashboardChatbot,
+  type DashboardWhatsAppIntegration,
   type RagIngestionRun,
 } from '../lib/api'
 import './DashboardIntegrationsPage.css'
@@ -63,6 +68,24 @@ export function DashboardIntegrationsPage() {
   const [ragActionBusy, setRagActionBusy] = useState<Record<string, boolean>>({})
   const [ragUrlsText, setRagUrlsText] = useState('')
   const [toast, setToast] = useState<{ message: string; tone: 'info' | 'success' | 'error' } | null>(null)
+  const [whatsAppLoading, setWhatsAppLoading] = useState(true)
+  const [whatsAppSaving, setWhatsAppSaving] = useState(false)
+  const [whatsAppTesting, setWhatsAppTesting] = useState(false)
+  const [whatsAppDisconnecting, setWhatsAppDisconnecting] = useState(false)
+  const [whatsAppWebhookUrl, setWhatsAppWebhookUrl] = useState('')
+  const [whatsAppIntegration, setWhatsAppIntegration] = useState<DashboardWhatsAppIntegration | null>(null)
+  const [whatsAppForm, setWhatsAppForm] = useState({
+    chatbotId: '',
+    phoneNumberId: '',
+    businessAccountId: '',
+    displayPhoneNumber: '',
+    accessToken: '',
+    verifyToken: '',
+    webhookSecret: '',
+    isActive: true,
+  })
+  const [whatsAppTestTo, setWhatsAppTestTo] = useState('')
+  const [whatsAppTestMessage, setWhatsAppTestMessage] = useState('Hi! This is a WhatsApp test message from Kufu.')
   const copyResetTimersRef = useRef<Record<string, number>>({})
   const toastResetTimerRef = useRef<number | null>(null)
   const isIntegrationLimitReached = !isAdmin && chatbots.length >= integrationLimit
@@ -142,9 +165,44 @@ export function DashboardIntegrationsPage() {
     }
   }
 
+  const loadWhatsAppIntegration = async () => {
+    setWhatsAppLoading(true)
+    try {
+      const response = await getDashboardWhatsAppIntegration()
+      setWhatsAppWebhookUrl(response.webhookUrl)
+      setWhatsAppIntegration(response.integration)
+      setWhatsAppForm((current) => ({
+        ...current,
+        chatbotId: response.integration?.chatbot_id ?? current.chatbotId,
+        phoneNumberId: response.integration?.phone_number_id ?? '',
+        businessAccountId: response.integration?.business_account_id ?? '',
+        displayPhoneNumber: response.integration?.display_phone_number ?? '',
+        verifyToken: response.integration?.verify_token ?? '',
+        accessToken: '',
+        isActive: response.integration?.is_active ?? true,
+      }))
+    } catch (loadError) {
+      setError(loadError instanceof ApiError ? loadError.message : 'Failed to load WhatsApp integration.')
+    } finally {
+      setWhatsAppLoading(false)
+    }
+  }
+
   useEffect(() => {
     void loadChatbots()
+    void loadWhatsAppIntegration()
   }, [])
+
+  useEffect(() => {
+    if (whatsAppForm.chatbotId || chatbots.length === 0) {
+      return
+    }
+
+    setWhatsAppForm((current) => ({
+      ...current,
+      chatbotId: chatbots[0]?.id ?? '',
+    }))
+  }, [chatbots, whatsAppForm.chatbotId])
 
   useEffect(() => {
     return () => {
@@ -404,6 +462,106 @@ export function DashboardIntegrationsPage() {
     }
   }
 
+  const handleWhatsAppConnect = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setError(null)
+
+    if (!whatsAppForm.chatbotId) {
+      setError('Select a chatbot before connecting WhatsApp.')
+      return
+    }
+
+    if (!whatsAppForm.phoneNumberId.trim()) {
+      setError('WhatsApp Phone Number ID is required.')
+      return
+    }
+
+    setWhatsAppSaving(true)
+    try {
+      const response = await postDashboardWhatsAppConnect({
+        chatbotId: whatsAppForm.chatbotId,
+        phoneNumberId: whatsAppForm.phoneNumberId.trim(),
+        businessAccountId: whatsAppForm.businessAccountId.trim(),
+        displayPhoneNumber: whatsAppForm.displayPhoneNumber.trim(),
+        accessToken: whatsAppForm.accessToken.trim(),
+        verifyToken: whatsAppForm.verifyToken.trim(),
+        webhookSecret: whatsAppForm.webhookSecret.trim(),
+        isActive: whatsAppForm.isActive,
+      })
+
+      setWhatsAppWebhookUrl(response.webhookUrl)
+      setWhatsAppIntegration(response.integration)
+      setWhatsAppForm((current) => ({
+        ...current,
+        chatbotId: response.integration.chatbot_id,
+        phoneNumberId: response.integration.phone_number_id,
+        businessAccountId: response.integration.business_account_id ?? '',
+        displayPhoneNumber: response.integration.display_phone_number ?? '',
+        verifyToken: response.integration.verify_token,
+        accessToken: '',
+        isActive: response.integration.is_active,
+      }))
+      showToast('WhatsApp integration saved. Configure webhook verify in Meta dashboard.', 'success')
+    } catch (connectError) {
+      setError(connectError instanceof ApiError ? connectError.message : 'Failed to connect WhatsApp.')
+      showToast('WhatsApp connection failed.', 'error')
+    } finally {
+      setWhatsAppSaving(false)
+    }
+  }
+
+  const handleWhatsAppDisconnect = async () => {
+    setError(null)
+    setWhatsAppDisconnecting(true)
+    try {
+      await deleteDashboardWhatsAppIntegration()
+      setWhatsAppIntegration(null)
+      setWhatsAppForm((current) => ({
+        ...current,
+        phoneNumberId: '',
+        businessAccountId: '',
+        displayPhoneNumber: '',
+        verifyToken: '',
+        accessToken: '',
+        webhookSecret: '',
+        isActive: true,
+      }))
+      showToast('WhatsApp integration disconnected.', 'info')
+    } catch (disconnectError) {
+      setError(disconnectError instanceof ApiError ? disconnectError.message : 'Failed to disconnect WhatsApp.')
+      showToast('Could not disconnect WhatsApp integration.', 'error')
+    } finally {
+      setWhatsAppDisconnecting(false)
+    }
+  }
+
+  const handleWhatsAppSendTest = async () => {
+    setError(null)
+    if (!whatsAppTestTo.trim()) {
+      setError('Enter a recipient WhatsApp number for test message.')
+      return
+    }
+
+    if (!whatsAppTestMessage.trim()) {
+      setError('Test message cannot be empty.')
+      return
+    }
+
+    setWhatsAppTesting(true)
+    try {
+      await postDashboardWhatsAppTestMessage({
+        to: whatsAppTestTo.trim(),
+        message: whatsAppTestMessage.trim(),
+      })
+      showToast('Test WhatsApp message sent successfully.', 'success')
+    } catch (testError) {
+      setError(testError instanceof ApiError ? testError.message : 'Failed to send test WhatsApp message.')
+      showToast('Failed to send test WhatsApp message.', 'error')
+    } finally {
+      setWhatsAppTesting(false)
+    }
+  }
+
   return (
     <div className="dashboard-integrations space-y-5">
       <div>
@@ -427,6 +585,212 @@ export function DashboardIntegrationsPage() {
             Start Here
           </button>
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-emerald-500/20 bg-slate-900/70 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-semibold text-white">WhatsApp Automation</h2>
+            <p className="mt-1 text-xs text-slate-400">
+              Connect Meta WhatsApp Cloud API to auto-reply using your chatbot knowledge base.
+            </p>
+          </div>
+          {whatsAppIntegration ? (
+            <span className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-200">
+              Connected
+            </span>
+          ) : (
+            <span className="rounded-full border border-slate-500/35 bg-slate-800/70 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-300">
+              Not Connected
+            </span>
+          )}
+        </div>
+
+        {whatsAppLoading ? (
+          <p className="mt-3 text-sm text-slate-400">Loading WhatsApp integration...</p>
+        ) : (
+          <>
+            <form className="mt-3 grid gap-3 md:grid-cols-2" onSubmit={handleWhatsAppConnect}>
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Chatbot</span>
+                <select
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+                  value={whatsAppForm.chatbotId}
+                  onChange={(event) =>
+                    setWhatsAppForm((current) => ({ ...current, chatbotId: event.target.value }))
+                  }
+                >
+                  {chatbots.length === 0 ? <option value="">No chatbot available</option> : null}
+                  {chatbots.map((chatbot) => (
+                    <option key={chatbot.id} value={chatbot.id}>
+                      {chatbot.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Phone Number ID</span>
+                <input
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+                  placeholder="e.g. 123456789012345"
+                  type="text"
+                  value={whatsAppForm.phoneNumberId}
+                  onChange={(event) =>
+                    setWhatsAppForm((current) => ({ ...current, phoneNumberId: event.target.value }))
+                  }
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Business Account ID</span>
+                <input
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+                  placeholder="Optional"
+                  type="text"
+                  value={whatsAppForm.businessAccountId}
+                  onChange={(event) =>
+                    setWhatsAppForm((current) => ({ ...current, businessAccountId: event.target.value }))
+                  }
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Display Phone Number</span>
+                <input
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+                  placeholder="Optional"
+                  type="text"
+                  value={whatsAppForm.displayPhoneNumber}
+                  onChange={(event) =>
+                    setWhatsAppForm((current) => ({ ...current, displayPhoneNumber: event.target.value }))
+                  }
+                />
+              </label>
+
+              <label className="block md:col-span-2">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Access Token</span>
+                <input
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+                  placeholder={
+                    whatsAppIntegration
+                      ? 'Leave blank to keep existing access token'
+                      : 'Paste your permanent WhatsApp access token'
+                  }
+                  type="password"
+                  value={whatsAppForm.accessToken}
+                  onChange={(event) =>
+                    setWhatsAppForm((current) => ({ ...current, accessToken: event.target.value }))
+                  }
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Verify Token</span>
+                <input
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+                  placeholder="Auto-generated if left blank"
+                  type="text"
+                  value={whatsAppForm.verifyToken}
+                  onChange={(event) =>
+                    setWhatsAppForm((current) => ({ ...current, verifyToken: event.target.value }))
+                  }
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">Webhook Secret</span>
+                <input
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+                  placeholder="Optional (for signature validation)"
+                  type="text"
+                  value={whatsAppForm.webhookSecret}
+                  onChange={(event) =>
+                    setWhatsAppForm((current) => ({ ...current, webhookSecret: event.target.value }))
+                  }
+                />
+              </label>
+
+              <label className="mt-1 inline-flex items-center gap-2 text-xs text-slate-300 md:col-span-2">
+                <input
+                  checked={whatsAppForm.isActive}
+                  className="rounded border-white/20 bg-white/10"
+                  type="checkbox"
+                  onChange={(event) =>
+                    setWhatsAppForm((current) => ({ ...current, isActive: event.target.checked }))
+                  }
+                />
+                Integration active
+              </label>
+
+              <div className="flex flex-wrap items-center gap-2 md:col-span-2">
+                <button
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
+                  disabled={whatsAppSaving || chatbots.length === 0}
+                  type="submit"
+                >
+                  {whatsAppSaving ? 'Saving...' : 'Save WhatsApp Integration'}
+                </button>
+                {whatsAppIntegration ? (
+                  <button
+                    className="rounded-lg border border-rose-500/35 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-200 transition-colors hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-70"
+                    disabled={whatsAppDisconnecting}
+                    type="button"
+                    onClick={handleWhatsAppDisconnect}
+                  >
+                    {whatsAppDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+                  </button>
+                ) : null}
+              </div>
+            </form>
+
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Webhook URL</p>
+                <p className="mt-1 break-all text-xs text-slate-200">{whatsAppWebhookUrl || '-'}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Verify Token</p>
+                <p className="mt-1 break-all text-xs text-slate-200">
+                  {whatsAppIntegration?.verify_token || whatsAppForm.verifyToken || '-'}
+                </p>
+              </div>
+            </div>
+
+            {whatsAppIntegration ? (
+              <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/60 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Send Test Message</p>
+                <div className="mt-2 grid gap-2 md:grid-cols-[1fr_2fr_auto]">
+                  <input
+                    className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+                    placeholder="Recipient number (e.g. 9198xxxxxx)"
+                    type="text"
+                    value={whatsAppTestTo}
+                    onChange={(event) => setWhatsAppTestTo(event.target.value)}
+                  />
+                  <input
+                    className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+                    placeholder="Test message"
+                    type="text"
+                    value={whatsAppTestMessage}
+                    onChange={(event) => setWhatsAppTestMessage(event.target.value)}
+                  />
+                  <button
+                    className="rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-70"
+                    disabled={whatsAppTesting}
+                    type="button"
+                    onClick={handleWhatsAppSendTest}
+                  >
+                    {whatsAppTesting ? 'Sending...' : 'Send Test'}
+                  </button>
+                </div>
+                <p className="mt-2 text-[11px] text-slate-500">
+                  Last inbound: {whatsAppIntegration.last_inbound_at || 'No incoming WhatsApp message yet'}
+                </p>
+              </div>
+            ) : null}
+          </>
+        )}
       </section>
 
       {!isAdmin && currentPlanCode === 'free' && chatbots.length > 0 ? (

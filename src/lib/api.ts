@@ -209,6 +209,20 @@ export type DashboardKbFile = {
   created_at: string
 }
 
+export type DashboardWhatsAppIntegration = {
+  id: string
+  chatbot_id: string
+  phone_number_id: string
+  business_account_id: string | null
+  display_phone_number: string | null
+  verify_token: string
+  is_active: boolean
+  last_inbound_at: string | null
+  created_at: string
+  updated_at: string
+  has_access_token: boolean
+}
+
 export type DashboardChatHistoryRow = {
   id: string
   chatbot_id: string
@@ -628,6 +642,44 @@ export function deleteDashboardKbFile(fileId: string): Promise<ApiOkResponse> {
 
 export function getDashboardEmbed(chatbotId: string): Promise<{ ok: true; snippet: string; chatbot: Pick<DashboardChatbot, 'id' | 'name' | 'widget_public_key'> }> {
   return requestJson(`/api/dashboard/embed/${encodeURIComponent(chatbotId)}`)
+}
+
+export function getDashboardWhatsAppIntegration(): Promise<{
+  ok: true
+  webhookUrl: string
+  integration: DashboardWhatsAppIntegration | null
+}> {
+  return requestJson('/api/dashboard/whatsapp')
+}
+
+export function postDashboardWhatsAppConnect(payload: {
+  chatbotId: string
+  phoneNumberId: string
+  businessAccountId?: string
+  displayPhoneNumber?: string
+  accessToken?: string
+  verifyToken?: string
+  webhookSecret?: string
+  isActive?: boolean
+}): Promise<{
+  ok: true
+  webhookUrl: string
+  integration: DashboardWhatsAppIntegration
+}> {
+  return requestJson('/api/dashboard/whatsapp/connect', { body: payload })
+}
+
+export function postDashboardWhatsAppTestMessage(payload: {
+  to: string
+  message: string
+}): Promise<{ ok: true; providerMessageId: string | null }> {
+  return requestJson('/api/dashboard/whatsapp/test-message', { body: payload })
+}
+
+export function deleteDashboardWhatsAppIntegration(): Promise<ApiOkResponse> {
+  return requestJson('/api/dashboard/whatsapp', {
+    method: 'DELETE',
+  })
 }
 
 export function getDashboardChatHistory(

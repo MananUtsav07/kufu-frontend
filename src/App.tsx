@@ -1,5 +1,5 @@
 ﻿import { useEffect } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 
 import { AdminLayout } from "./admin/AdminLayout";
 import { AdminMessagesPage } from "./admin/AdminMessagesPage";
@@ -33,6 +33,21 @@ import { LoginPage } from "./pages/LoginPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { WidgetPage } from "./pages/WidgetPage";
 import { ContactPage } from "./pages/home/ContactPage";
+import { OwnerProtectedRoute } from "./property-management/OwnerProtectedRoute";
+import { PropertyOwnerLayout } from "./property-management/PropertyOwnerLayout";
+import { PropertyOwnerNotificationsPage } from "./property-management/PropertyOwnerNotificationsPage";
+import { PropertyOwnerOverviewPage } from "./property-management/PropertyOwnerOverviewPage";
+import { PropertyOwnerTenantDetailPage } from "./property-management/PropertyOwnerTenantDetailPage";
+import { PropertyOwnerTenantsPage } from "./property-management/PropertyOwnerTenantsPage";
+import { PropertyOwnerTicketsPage } from "./property-management/PropertyOwnerTicketsPage";
+import { PropertyTenantChatPage } from "./property-management/PropertyTenantChatPage";
+import { PropertyTenantLayout } from "./property-management/PropertyTenantLayout";
+import { PropertyTenantLoginPage } from "./property-management/PropertyTenantLoginPage";
+import { PropertyTenantOverviewPage } from "./property-management/PropertyTenantOverviewPage";
+import { PropertyTenantSupportPage } from "./property-management/PropertyTenantSupportPage";
+import { PropertyTenantTicketsPage } from "./property-management/PropertyTenantTicketsPage";
+import { TenantAuthProvider } from "./property-management/tenant-auth-context";
+import { TenantProtectedRoute } from "./property-management/TenantProtectedRoute";
 
 const defaultMeta = {
   title: "Kufu - AI Automation for Customer Inquiries",
@@ -75,7 +90,27 @@ const routeMeta: Record<string, { title: string; description: string }> = {
     title: "API Test Harness - Kufu",
     description: "Run API checks for Kufu auth and dashboard endpoints.",
   },
+  "/property-management/owner": {
+    title: "Property Owner Dashboard - Kufu",
+    description: "Manage tenants, tickets, reminders, and escalations for property operations.",
+  },
+  "/property-management/tenant/login": {
+    title: "Tenant Login - Kufu",
+    description: "Tenant portal login for property management support and rent updates.",
+  },
+  "/property-management/tenant": {
+    title: "Tenant Dashboard - Kufu",
+    description: "Tenant support dashboard for tickets, AI chat, and owner contact.",
+  },
 };
+
+function TenantRouteProvider() {
+  return (
+    <TenantAuthProvider>
+      <Outlet />
+    </TenantAuthProvider>
+  );
+}
 
 function MetaManager() {
   const location = useLocation();
@@ -162,6 +197,28 @@ function App() {
             <Route path="messages" element={<AdminMessagesPage />} />
             <Route path="tickets" element={<AdminTicketsPage />} />
             <Route path="quotes" element={<AdminQuotesPage />} />
+          </Route>
+        </Route>
+
+        <Route element={<OwnerProtectedRoute />}>
+          <Route path="/property-management/owner" element={<PropertyOwnerLayout />}>
+            <Route index element={<PropertyOwnerOverviewPage />} />
+            <Route path="tenants" element={<PropertyOwnerTenantsPage />} />
+            <Route path="tenants/:id" element={<PropertyOwnerTenantDetailPage />} />
+            <Route path="tickets" element={<PropertyOwnerTicketsPage />} />
+            <Route path="notifications" element={<PropertyOwnerNotificationsPage />} />
+          </Route>
+        </Route>
+
+        <Route element={<TenantRouteProvider />}>
+          <Route path="/property-management/tenant/login" element={<PropertyTenantLoginPage />} />
+          <Route element={<TenantProtectedRoute />}>
+            <Route path="/property-management/tenant" element={<PropertyTenantLayout />}>
+              <Route index element={<PropertyTenantOverviewPage />} />
+              <Route path="tickets" element={<PropertyTenantTicketsPage />} />
+              <Route path="chat" element={<PropertyTenantChatPage />} />
+              <Route path="support" element={<PropertyTenantSupportPage />} />
+            </Route>
           </Route>
         </Route>
 

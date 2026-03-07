@@ -19,6 +19,7 @@ type RequestOptions = {
   body?: unknown
   headers?: HeadersInit
   auth?: boolean
+  token?: string | null
 }
 
 export type Plan = {
@@ -286,6 +287,117 @@ export type AdminUserListItem = {
   messageUsageThisPeriod: number
 }
 
+export type PropertyOwnerSummary = {
+  activeTenants: number
+  openTickets: number
+  overdueRent: number
+  escalatedChats: number
+  remindersPending: number
+}
+
+export type PropertyTenantListItem = {
+  id: string
+  owner_id: string
+  property_id: string
+  full_name: string
+  email: string
+  phone: string | null
+  tenant_access_id: string
+  lease_start_date: string | null
+  lease_end_date: string | null
+  monthly_rent: number
+  payment_due_day: number
+  payment_status: 'pending' | 'paid' | 'overdue' | 'partial'
+  status: 'active' | 'inactive' | 'terminated'
+  created_at: string
+  property: {
+    id: string
+    property_name: string
+    address: string
+    unit_number: string | null
+  } | null
+}
+
+export type PropertyTenantTicket = {
+  id: string
+  tenant_id: string
+  owner_id: string
+  subject: string
+  message: string
+  status: 'open' | 'in_progress' | 'resolved' | 'closed'
+  created_at: string
+  updated_at: string
+}
+
+export type PropertyTenantMessage = {
+  id: string
+  tenant_id: string
+  owner_id: string
+  sender_type: 'tenant' | 'bot' | 'owner'
+  message: string
+  intent: string | null
+  escalated: boolean
+  created_at: string
+}
+
+export type PropertyRentReminder = {
+  id: string
+  tenant_id: string
+  owner_id: string
+  reminder_type: '7_days_before' | '1_day_before' | 'due_today' | '3_days_late' | '7_days_late'
+  scheduled_for: string
+  sent_at: string | null
+  status: 'pending' | 'sent' | 'failed' | 'canceled'
+  created_at: string
+}
+
+export type PropertyOwnerNotification = {
+  id: string
+  owner_id: string
+  tenant_id: string | null
+  notification_type: string
+  title: string
+  message: string
+  is_read: boolean
+  created_at: string
+}
+
+export type PropertyTenantSessionUser = {
+  id: string
+  owner_id: string
+  property_id: string
+  full_name: string
+  email: string
+  phone: string | null
+  tenant_access_id: string
+  lease_start_date: string | null
+  lease_end_date: string | null
+  monthly_rent: number
+  payment_due_day: number
+  payment_status: 'pending' | 'paid' | 'overdue' | 'partial'
+  status: 'active' | 'inactive' | 'terminated'
+  created_at: string
+}
+
+export type PropertyTenantMeResponse = {
+  ok: true
+  tenant: PropertyTenantSessionUser
+  property: {
+    id: string
+    owner_id: string
+    property_name: string
+    address: string
+    unit_number: string | null
+    created_at: string
+  } | null
+  owner: {
+    id: string
+    company_name: string
+    support_email: string
+    support_whatsapp: string | null
+  }
+}
+
 export class ApiError extends Error {
   status: number
   details?: unknown
@@ -342,7 +454,9 @@ async function requestJson<TResponse>(path: string, options: RequestOptions = {}
     headers.set('Content-Type', 'application/json')
   }
 
-  if (options.auth !== false && authToken) {
+  if (options.token) {
+    headers.set('Authorization', `Bearer ${options.token}`)
+  } else if (options.auth !== false && authToken) {
     headers.set('Authorization', `Bearer ${authToken}`)
   }
 
@@ -374,11 +488,18 @@ async function requestJson<TResponse>(path: string, options: RequestOptions = {}
   return (await response.json()) as TResponse
 }
 
-async function requestFormData<TResponse>(path: string, formData: FormData, method: 'POST' | 'PATCH' = 'POST'): Promise<TResponse> {
+async function requestFormData<TResponse>(
+  path: string,
+  formData: FormData,
+  method: 'POST' | 'PATCH' = 'POST',
+  tokenOverride?: string | null,
+): Promise<TResponse> {
   const headers = new Headers()
   headers.set('Accept', 'application/json')
 
-  if (authToken) {
+  if (tokenOverride) {
+    headers.set('Authorization', `Bearer ${tokenOverride}`)
+  } else if (authToken) {
     headers.set('Authorization', `Bearer ${authToken}`)
   }
 
@@ -882,6 +1003,181 @@ export function patchDashboardLeadStatus(leadId: string, status: string): Promis
   return requestJson(`/api/dashboard/leads/${encodeURIComponent(leadId)}`, {
     method: 'PATCH',
     body: { status },
+  })
+}
+
+export function getPropertyOwnerDashboardSummary(): Promise<{ ok: true; summary: PropertyOwnerSummary }> {
+  return requestJson('/api/property-management/owner/dashboard-summary')
+}
+
+export function getPropertyOwnerTenants(): Promise<{ ok: true; tenants: PropertyTenantListItem[] }> {
+  return requestJson('/api/property-management/owner/tenants')
+}
+
+export function postPropertyOwnerTenant(payload: {
+  property_id?: string
+  property_name?: string
+  address?: string
+  unit_number?: string
+  full_name: string
+  email: string
+  phone?: string
+  password?: string
+  lease_start_date?: string
+  lease_end_date?: string
+  monthly_rent: number | string
+  payment_due_day: number
+  payment_status?: 'pending' | 'paid' | 'overdue' | 'partial'
+  status?: 'active' | 'inactive' | 'terminated'
+}): Promise<{
+  ok: true
+  tenant: PropertyTenantSessionUser
+  credentials: {
+    tenant_access_id: string
+    password: string
+    generated: boolean
+  }
+}> {
+  return requestJson('/api/property-management/owner/tenants', { body: payload })
+}
+
+export function getPropertyOwnerTenantDetail(tenantId: string): Promise<{
+  ok: true
+  detail: {
+    tenant: PropertyTenantSessionUser
+    property: PropertyTenantMeResponse['property']
+    tickets: PropertyTenantTicket[]
+    reminders: PropertyRentReminder[]
+    messages: PropertyTenantMessage[]
+  }
+}> {
+  return requestJson(`/api/property-management/owner/tenants/${encodeURIComponent(tenantId)}`)
+}
+
+export function getPropertyOwnerTickets(): Promise<{ ok: true; tickets: PropertyTenantTicket[] }> {
+  return requestJson('/api/property-management/owner/tickets')
+}
+
+export function patchPropertyOwnerTicketStatus(
+  ticketId: string,
+  status: 'open' | 'in_progress' | 'resolved' | 'closed',
+): Promise<{ ok: true; ticket: PropertyTenantTicket }> {
+  return requestJson(`/api/property-management/owner/tickets/${encodeURIComponent(ticketId)}`, {
+    method: 'PATCH',
+    body: { status },
+  })
+}
+
+export function getPropertyOwnerNotifications(): Promise<{ ok: true; notifications: PropertyOwnerNotification[] }> {
+  return requestJson('/api/property-management/owner/notifications')
+}
+
+export function postPropertyTenantLogin(payload: {
+  tenant_access_id: string
+  password: string
+  email?: string
+}): Promise<{
+  ok: true
+  token: string
+  tenant: PropertyTenantSessionUser
+  property: PropertyTenantMeResponse['property']
+  owner: PropertyTenantMeResponse['owner']
+}> {
+  return requestJson('/api/property-management/tenant/login', {
+    method: 'POST',
+    body: payload,
+    auth: false,
+  })
+}
+
+export function getPropertyTenantMe(token: string): Promise<PropertyTenantMeResponse> {
+  return requestJson('/api/property-management/tenant/me', {
+    token,
+    auth: false,
+  })
+}
+
+export function getPropertyTenantDashboardSummary(token: string): Promise<{
+  ok: true
+  summary: {
+    openTickets: number
+    recentMessages: number
+    pendingReminders: number
+    paymentStatus: 'pending' | 'paid' | 'overdue' | 'partial'
+    monthlyRent: number
+    dueDay: number
+  }
+  tenant: PropertyTenantSessionUser
+  property: PropertyTenantMeResponse['property']
+}> {
+  return requestJson('/api/property-management/tenant/dashboard-summary', {
+    token,
+    auth: false,
+  })
+}
+
+export function postPropertyTenantTicket(
+  token: string,
+  payload: { subject: string; message: string },
+): Promise<{ ok: true; ticket: PropertyTenantTicket }> {
+  return requestJson('/api/property-management/tenant/tickets', {
+    token,
+    auth: false,
+    body: payload,
+  })
+}
+
+export function getPropertyTenantTickets(token: string): Promise<{ ok: true; tickets: PropertyTenantTicket[] }> {
+  return requestJson('/api/property-management/tenant/tickets', {
+    token,
+    auth: false,
+  })
+}
+
+export function getPropertyTenantMessages(token: string): Promise<{ ok: true; messages: PropertyTenantMessage[] }> {
+  return requestJson('/api/property-management/tenant/messages', {
+    token,
+    auth: false,
+  })
+}
+
+export function postPropertyTenantChat(
+  token: string,
+  payload: { message: string },
+): Promise<{ ok: true; reply: string; intent: string; escalated: boolean }> {
+  return requestJson('/api/property-management/tenant/chat', {
+    token,
+    auth: false,
+    body: payload,
+  })
+}
+
+export function getPropertyTenantOwnerContact(token: string): Promise<{
+  ok: true
+  owner: PropertyTenantMeResponse['owner']
+  whatsapp: {
+    ownerId: string
+    tenantId: string
+    supportWhatsApp: string | null
+    messageTemplate: string
+  }
+}> {
+  return requestJson('/api/property-management/tenant/owner-contact', {
+    token,
+    auth: false,
+  })
+}
+
+export function postPropertyProcessReminders(payload?: { referenceDate?: string }): Promise<{
+  ok: true
+  result: {
+    processed: number
+    pending: number
+  }
+}> {
+  return requestJson('/api/property-management/system/process-reminders', {
+    method: 'POST',
+    body: payload ?? {},
   })
 }
 

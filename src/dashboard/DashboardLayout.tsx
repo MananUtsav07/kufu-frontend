@@ -59,6 +59,7 @@ const DASHBOARD_SECTIONS: DashboardSection[] = [
       { to: '/dashboard/plan', label: 'Billing & Plan', icon: 'workspace_premium' },
       { to: '/dashboard/upgrade', label: 'Upgrade', icon: 'rocket_launch' },
       { to: '/dashboard/profile', label: 'Profile', icon: 'person' },
+      { to: '/property-management/owner', label: 'Property Mgmt', icon: 'apartment' },
       { to: '/dashboard/support', label: 'Help & Support', icon: 'support_agent' },
       { to: '/dashboard/custom-quote', label: 'Custom Quote', icon: 'request_quote' },
     ],

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import {
   ApiError,
@@ -11,19 +11,27 @@ import './AdminUsersPage.css'
 const PLAN_OPTIONS = ['free', 'starter', 'pro', 'business'] as const
 
 export function AdminUsersPage() {
+  const pageSize = 50
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [users, setUsers] = useState<AdminUserListItem[]>([])
   const [draftPlans, setDraftPlans] = useState<Record<string, string>>({})
   const [savingByUserId, setSavingByUserId] = useState<Record<string, boolean>>({})
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [offset, setOffset] = useState(0)
+  const [total, setTotal] = useState(0)
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async (nextOffset: number) => {
     setLoading(true)
     setError(null)
     try {
-      const response = await getAdminUsers()
+      const response = await getAdminUsers({
+        limit: pageSize,
+        offset: nextOffset,
+      })
       setUsers(response.users)
+      setOffset(nextOffset)
+      setTotal(response.pagination.total)
       setDraftPlans(
         Object.fromEntries(response.users.map((user) => [user.id, user.currentPlanCode])),
       )
@@ -32,11 +40,11 @@ export function AdminUsersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [pageSize])
 
   useEffect(() => {
-    void loadUsers()
-  }, [])
+    void loadUsers(0)
+  }, [loadUsers])
 
   const handleSavePlan = async (userId: string) => {
     const targetPlan = draftPlans[userId]
@@ -141,6 +149,36 @@ export function AdminUsersPage() {
             </table>
           </div>
         )}
+
+        <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
+          <p>
+            Showing {users.length === 0 ? 0 : offset + 1}-{offset + users.length} of {total}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              className="rounded-lg border border-white/10 px-2.5 py-1.5 text-slate-300 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={loading || offset === 0}
+              type="button"
+              onClick={() => {
+                const previousOffset = Math.max(0, offset - pageSize)
+                void loadUsers(previousOffset)
+              }}
+            >
+              Previous
+            </button>
+            <button
+              className="rounded-lg border border-white/10 px-2.5 py-1.5 text-slate-300 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={loading || offset + users.length >= total}
+              type="button"
+              onClick={() => {
+                const nextOffset = offset + pageSize
+                void loadUsers(nextOffset)
+              }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </section>
     </div>
   )

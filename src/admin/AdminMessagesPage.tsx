@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { ApiError, getAdminMessages, getAdminMessagesExportUrl } from '../lib/api'
 import './AdminMessagesPage.css'
@@ -21,15 +21,18 @@ export function AdminMessagesPage() {
   const [userIdFilter, setUserIdFilter] = useState('')
   const [chatbotIdFilter, setChatbotIdFilter] = useState('')
 
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async (filters?: { userId?: string; chatbotId?: string }) => {
     setLoading(true)
     setError(null)
     try {
+      const normalizedUserId = filters?.userId?.trim() ?? ''
+      const normalizedChatbotId = filters?.chatbotId?.trim() ?? ''
+
       const response = await getAdminMessages({
         limit: 100,
         offset: 0,
-        user_id: userIdFilter.trim() || undefined,
-        chatbot_id: chatbotIdFilter.trim() || undefined,
+        user_id: normalizedUserId || undefined,
+        chatbot_id: normalizedChatbotId || undefined,
       })
 
       setMessages(response.messages as AdminMessage[])
@@ -38,11 +41,18 @@ export function AdminMessagesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     void loadMessages()
-  }, [])
+  }, [loadMessages])
+
+  const handleApplyFilters = useCallback(() => {
+    void loadMessages({
+      userId: userIdFilter,
+      chatbotId: chatbotIdFilter,
+    })
+  }, [chatbotIdFilter, loadMessages, userIdFilter])
 
   const exportUrl = useMemo(
     () =>
@@ -85,7 +95,7 @@ export function AdminMessagesPage() {
           <button
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500"
             type="button"
-            onClick={loadMessages}
+            onClick={handleApplyFilters}
           >
             Apply Filters
           </button>

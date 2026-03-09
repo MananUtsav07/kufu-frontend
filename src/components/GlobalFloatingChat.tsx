@@ -14,14 +14,17 @@ function shouldHideGlobalChat(pathname: string): boolean {
 
 export function GlobalFloatingChat() {
   const location = useLocation();
-  const [chatOpen, setChatOpen] = useState(false);
   const hideChat = shouldHideGlobalChat(location.pathname);
 
-  useEffect(() => {
-    if (hideChat) {
-      setChatOpen(false);
-    }
-  }, [hideChat]);
+  if (hideChat) {
+    return null;
+  }
+
+  return <VisibleFloatingChat />;
+}
+
+function VisibleFloatingChat() {
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     const handleOpenRequest = () => {
@@ -33,10 +36,6 @@ export function GlobalFloatingChat() {
       window.removeEventListener(GLOBAL_CHAT_OPEN_EVENT, handleOpenRequest);
     };
   }, []);
-
-  if (hideChat) {
-    return null;
-  }
 
   return (
     <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-3">

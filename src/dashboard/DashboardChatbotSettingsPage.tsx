@@ -182,6 +182,7 @@ export function DashboardChatbotSettingsPage() {
           </div>
 
           <BotCustomizationForm
+            key={`${selectedChatbotId}:${settings?.bot_name ?? ''}:${settings?.greeting_message ?? ''}:${settings?.primary_color ?? ''}`}
             initialSettings={settings}
             loading={loadingSettings}
             saving={saving}

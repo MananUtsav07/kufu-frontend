@@ -121,7 +121,7 @@ export function DashboardIntegrationsPage() {
     }
   }, [location.pathname, location.search, navigate, showToast])
 
-  const loadChatbotLogos = async (items: DashboardChatbot[]) => {
+  const loadChatbotLogos = useCallback(async (items: DashboardChatbot[]) => {
     if (items.length === 0) {
       setLogoUrlByChatbot({})
       return
@@ -143,9 +143,9 @@ export function DashboardIntegrationsPage() {
     )
 
     setLogoUrlByChatbot(Object.fromEntries(logoEntries))
-  }
+  }, [])
 
-  const loadChatbots = async () => {
+  const loadChatbots = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -181,9 +181,9 @@ export function DashboardIntegrationsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [loadChatbotLogos])
 
-  const loadWhatsAppIntegration = async () => {
+  const loadWhatsAppIntegration = useCallback(async () => {
     setWhatsAppLoading(true)
     try {
       const response = await getDashboardWhatsAppIntegration()
@@ -204,12 +204,12 @@ export function DashboardIntegrationsPage() {
     } finally {
       setWhatsAppLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     void loadChatbots()
     void loadWhatsAppIntegration()
-  }, [])
+  }, [loadChatbots, loadWhatsAppIntegration])
 
   useEffect(() => {
     if (whatsAppForm.chatbotId || chatbots.length === 0) {
@@ -223,8 +223,9 @@ export function DashboardIntegrationsPage() {
   }, [chatbots, whatsAppForm.chatbotId])
 
   useEffect(() => {
+    const copyResetTimers = copyResetTimersRef.current
     return () => {
-      Object.values(copyResetTimersRef.current).forEach((timerId) => {
+      Object.values(copyResetTimers).forEach((timerId) => {
         window.clearTimeout(timerId)
       })
       if (toastResetTimerRef.current) {

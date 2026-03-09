@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, useState } from 'react'
 
 import type { ChatbotSettings } from '../../lib/api'
 
@@ -33,25 +33,14 @@ export function BotCustomizationForm({
   saving = false,
   onSubmit,
 }: BotCustomizationFormProps) {
-  const [botName, setBotName] = useState('')
-  const [greetingMessage, setGreetingMessage] = useState('')
-  const [primaryColor, setPrimaryColor] = useState(DEFAULT_PRIMARY_COLOR)
+  const initialBotName = initialSettings?.bot_name ?? ''
+  const initialGreetingMessage = initialSettings?.greeting_message ?? ''
+  const initialPrimaryColor = normalizeHexColor(initialSettings?.primary_color)
+
+  const [botName, setBotName] = useState(initialBotName)
+  const [greetingMessage, setGreetingMessage] = useState(initialGreetingMessage)
+  const [primaryColor, setPrimaryColor] = useState(initialPrimaryColor)
   const [formError, setFormError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!initialSettings) {
-      setBotName('')
-      setGreetingMessage('')
-      setPrimaryColor(DEFAULT_PRIMARY_COLOR)
-      setFormError(null)
-      return
-    }
-
-    setBotName(initialSettings.bot_name)
-    setGreetingMessage(initialSettings.greeting_message)
-    setPrimaryColor(normalizeHexColor(initialSettings.primary_color))
-    setFormError(null)
-  }, [initialSettings])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

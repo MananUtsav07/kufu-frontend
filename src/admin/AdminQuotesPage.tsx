@@ -1,45 +1,61 @@
-﻿import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { ApiError, getAdminQuotes, patchAdminQuote, type DashboardQuote } from '../lib/api'
 import './AdminQuotesPage.css'
 
 const PLAN_OPTIONS = ['free', 'starter', 'pro', 'business'] as const
+const STATUS_OPTIONS = ['all', 'pending', 'responded', 'approved', 'closed'] as const
+
+type StatusFilter = (typeof STATUS_OPTIONS)[number]
 
 export function AdminQuotesPage() {
+  const pageSize = 50
   const [quotes, setQuotes] = useState<DashboardQuote[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [responseMap, setResponseMap] = useState<Record<string, string>>({})
   const [planMap, setPlanMap] = useState<Record<string, 'free' | 'starter' | 'pro' | 'business'>>({})
+  const [offset, setOffset] = useState(0)
+  const [total, setTotal] = useState(0)
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
-  const loadQuotes = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await getAdminQuotes()
-      setQuotes(response.quotes)
-      setResponseMap(
-        response.quotes.reduce<Record<string, string>>((acc, quote) => {
-          acc[quote.id] = quote.admin_response || ''
-          return acc
-        }, {}),
-      )
-      setPlanMap(
-        response.quotes.reduce<Record<string, 'free' | 'starter' | 'pro' | 'business'>>((acc, quote) => {
-          acc[quote.id] = (quote.requested_plan as 'free' | 'starter' | 'pro' | 'business') || 'starter'
-          return acc
-        }, {}),
-      )
-    } catch (loadError) {
-      setError(loadError instanceof ApiError ? loadError.message : 'Failed to load quote requests.')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const loadQuotes = useCallback(
+    async (nextOffset: number) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const response = await getAdminQuotes({
+          limit: pageSize,
+          offset: nextOffset,
+          status: statusFilter === 'all' ? undefined : statusFilter,
+        })
+        setQuotes(response.quotes)
+        setOffset(nextOffset)
+        setTotal(response.pagination.total)
+        setResponseMap(
+          response.quotes.reduce<Record<string, string>>((acc, quote) => {
+            acc[quote.id] = quote.admin_response || ''
+            return acc
+          }, {}),
+        )
+        setPlanMap(
+          response.quotes.reduce<Record<string, 'free' | 'starter' | 'pro' | 'business'>>((acc, quote) => {
+            acc[quote.id] = (quote.requested_plan as 'free' | 'starter' | 'pro' | 'business') || 'starter'
+            return acc
+          }, {}),
+        )
+      } catch (loadError) {
+        setError(loadError instanceof ApiError ? loadError.message : 'Failed to load quote requests.')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [pageSize, statusFilter],
+  )
 
   useEffect(() => {
-    void loadQuotes()
-  }, [])
+    void loadQuotes(0)
+  }, [loadQuotes])
 
   const updateQuote = async (quote: DashboardQuote, status: 'responded' | 'closed' | 'approved') => {
     setError(null)
@@ -61,6 +77,26 @@ export function AdminQuotesPage() {
       <div>
         <h2 className="font-display text-2xl font-black text-white sm:text-3xl">Quotes & Upgrades</h2>
         <p className="text-sm text-slate-400">Respond to custom quote requests and approve upgrades.</p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="text-xs uppercase tracking-wide text-slate-400" htmlFor="quote-status-filter">
+            Status
+          </label>
+          <select
+            id="quote-status-filter"
+            className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-200"
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+          >
+            {STATUS_OPTIONS.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {error ? (
@@ -144,6 +180,36 @@ export function AdminQuotesPage() {
               </div>
             </article>
           ))}
+
+          <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
+            <p>
+              Showing {quotes.length === 0 ? 0 : offset + 1}-{offset + quotes.length} of {total}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                className="rounded-lg border border-white/10 px-2.5 py-1.5 text-slate-300 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={loading || offset === 0}
+                type="button"
+                onClick={() => {
+                  const previousOffset = Math.max(0, offset - pageSize)
+                  void loadQuotes(previousOffset)
+                }}
+              >
+                Previous
+              </button>
+              <button
+                className="rounded-lg border border-white/10 px-2.5 py-1.5 text-slate-300 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={loading || offset + quotes.length >= total}
+                type="button"
+                onClick={() => {
+                  const nextOffset = offset + pageSize
+                  void loadQuotes(nextOffset)
+                }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

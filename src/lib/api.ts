@@ -1,4 +1,4 @@
-﻿import type { Message } from './types'
+import type { Message } from './types'
 
 type ApiOkResponse = {
   ok: true
@@ -322,6 +322,12 @@ export type AdminUserListItem = {
   messageUsageThisPeriod: number
 }
 
+export type Pagination = {
+  limit: number
+  offset: number
+  total: number
+}
+
 export class ApiError extends Error {
   status: number
   details?: unknown
@@ -335,6 +341,7 @@ export class ApiError extends Error {
 }
 
 let authToken: string | null = null
+const pendingGetRequests = new Map<string, Promise<unknown>>()
 
 export function setApiAuthToken(token: string | null) {
   authToken = token?.trim() ? token.trim() : null
@@ -382,32 +389,54 @@ async function requestJson<TResponse>(path: string, options: RequestOptions = {}
     headers.set('Authorization', `Bearer ${authToken}`)
   }
 
-  let response: Response
-  try {
-    response = await fetch(resolveApiUrl(path), {
-      method: options.method ?? (options.body !== undefined ? 'POST' : 'GET'),
-      headers,
-      credentials: 'include',
-      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+  const method = options.method ?? (options.body !== undefined ? 'POST' : 'GET')
+  const resolvedUrl = resolveApiUrl(path)
+
+  const executeRequest = async (): Promise<TResponse> => {
+    let response: Response
+    try {
+      response = await fetch(resolvedUrl, {
+        method,
+        headers,
+        credentials: 'include',
+        body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      })
+    } catch (error) {
+      throw new ApiError(error instanceof Error ? error.message : 'Network error', 0, error)
+    }
+
+    if (!response.ok) {
+      const errorPayload = await parseErrorPayload(response)
+      throw new ApiError(
+        errorPayload?.error ?? errorPayload?.message ?? errorPayload?.reply ?? `Request failed (${response.status})`,
+        response.status,
+        errorPayload,
+      )
+    }
+
+    if (response.status === 204) {
+      return {} as TResponse
+    }
+
+    return (await response.json()) as TResponse
+  }
+
+  // Prevent duplicate GET requests fired in quick succession by nested components or strict-mode mount cycles.
+  if (method === 'GET' && options.body === undefined) {
+    const requestKey = `${method}:${resolvedUrl}:${authToken ?? ''}`
+    const existing = pendingGetRequests.get(requestKey)
+    if (existing) {
+      return (await existing) as TResponse
+    }
+
+    const pending = executeRequest().finally(() => {
+      pendingGetRequests.delete(requestKey)
     })
-  } catch (error) {
-    throw new ApiError(error instanceof Error ? error.message : 'Network error', 0, error)
+    pendingGetRequests.set(requestKey, pending as Promise<unknown>)
+    return (await pending) as TResponse
   }
 
-  if (!response.ok) {
-    const errorPayload = await parseErrorPayload(response)
-    throw new ApiError(
-      errorPayload?.error ?? errorPayload?.message ?? errorPayload?.reply ?? `Request failed (${response.status})`,
-      response.status,
-      errorPayload,
-    )
-  }
-
-  if (response.status === 204) {
-    return {} as TResponse
-  }
-
-  return (await response.json()) as TResponse
+  return executeRequest()
 }
 
 async function requestFormData<TResponse>(path: string, formData: FormData, method: 'POST' | 'PATCH' = 'POST'): Promise<TResponse> {
@@ -984,8 +1013,15 @@ export function getAdminOverview(): Promise<{ ok: true; overview: AdminOverview 
   return requestJson('/api/admin/overview')
 }
 
-export function getAdminUsers(): Promise<{ ok: true; users: AdminUserListItem[] }> {
-  return requestJson('/api/admin/users')
+export function getAdminUsers(params?: {
+  limit?: number
+  offset?: number
+}): Promise<{ ok: true; users: AdminUserListItem[]; pagination: Pagination }> {
+  const query = new URLSearchParams()
+  if (params?.limit !== undefined) query.set('limit', String(params.limit))
+  if (params?.offset !== undefined) query.set('offset', String(params.offset))
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return requestJson(`/api/admin/users${suffix}`)
 }
 
 export function postAdminUserPlan(userId: string, payload: {
@@ -1031,8 +1067,17 @@ export function getAdminMessagesExportUrl(params?: {
   return `${resolveApiUrl('/api/admin/messages/export')}${suffix}`
 }
 
-export function getAdminTickets(): Promise<{ ok: true; tickets: DashboardTicket[] }> {
-  return requestJson('/api/admin/tickets')
+export function getAdminTickets(params?: {
+  limit?: number
+  offset?: number
+  status?: 'open' | 'closed'
+}): Promise<{ ok: true; tickets: DashboardTicket[]; pagination: Pagination }> {
+  const query = new URLSearchParams()
+  if (params?.limit !== undefined) query.set('limit', String(params.limit))
+  if (params?.offset !== undefined) query.set('offset', String(params.offset))
+  if (params?.status) query.set('status', params.status)
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return requestJson(`/api/admin/tickets${suffix}`)
 }
 
 export function patchAdminTicket(ticketId: string, payload: {
@@ -1045,8 +1090,17 @@ export function patchAdminTicket(ticketId: string, payload: {
   })
 }
 
-export function getAdminQuotes(): Promise<{ ok: true; quotes: DashboardQuote[] }> {
-  return requestJson('/api/admin/quotes')
+export function getAdminQuotes(params?: {
+  limit?: number
+  offset?: number
+  status?: 'pending' | 'responded' | 'closed' | 'approved'
+}): Promise<{ ok: true; quotes: DashboardQuote[]; pagination: Pagination }> {
+  const query = new URLSearchParams()
+  if (params?.limit !== undefined) query.set('limit', String(params.limit))
+  if (params?.offset !== undefined) query.set('offset', String(params.offset))
+  if (params?.status) query.set('status', params.status)
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return requestJson(`/api/admin/quotes${suffix}`)
 }
 
 export function patchAdminQuote(quoteId: string, payload: {
@@ -1087,3 +1141,4 @@ export function getAdminImpersonate(userId: string): Promise<{
 export function verifyAccount(params: { token: string }): Promise<ApiOkResponse> {
   return postVerifyEmail({ token: params.token })
 }
+

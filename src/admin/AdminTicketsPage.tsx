@@ -1,36 +1,49 @@
-﻿import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { ApiError, getAdminTickets, patchAdminTicket, type DashboardTicket } from '../lib/api'
 import './AdminTicketsPage.css'
 
 export function AdminTicketsPage() {
+  const pageSize = 50
   const [tickets, setTickets] = useState<DashboardTicket[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [responseMap, setResponseMap] = useState<Record<string, string>>({})
+  const [offset, setOffset] = useState(0)
+  const [total, setTotal] = useState(0)
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'closed'>('all')
 
-  const loadTickets = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await getAdminTickets()
-      setTickets(response.tickets)
-      setResponseMap(
-        response.tickets.reduce<Record<string, string>>((acc, ticket) => {
-          acc[ticket.id] = ticket.admin_response || ''
-          return acc
-        }, {}),
-      )
-    } catch (loadError) {
-      setError(loadError instanceof ApiError ? loadError.message : 'Failed to load tickets.')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const loadTickets = useCallback(
+    async (nextOffset: number) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const response = await getAdminTickets({
+          limit: pageSize,
+          offset: nextOffset,
+          status: statusFilter === 'all' ? undefined : statusFilter,
+        })
+        setTickets(response.tickets)
+        setOffset(nextOffset)
+        setTotal(response.pagination.total)
+        setResponseMap(
+          response.tickets.reduce<Record<string, string>>((acc, ticket) => {
+            acc[ticket.id] = ticket.admin_response || ''
+            return acc
+          }, {}),
+        )
+      } catch (loadError) {
+        setError(loadError instanceof ApiError ? loadError.message : 'Failed to load tickets.')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [pageSize, statusFilter],
+  )
 
   useEffect(() => {
-    void loadTickets()
-  }, [])
+    void loadTickets(0)
+  }, [loadTickets])
 
   const updateTicket = async (ticket: DashboardTicket, status: 'open' | 'closed') => {
     setError(null)
@@ -51,6 +64,24 @@ export function AdminTicketsPage() {
       <div>
         <h2 className="font-display text-2xl font-black text-white sm:text-3xl">Tickets</h2>
         <p className="text-sm text-slate-400">Respond to client support tickets and close issues.</p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="text-xs uppercase tracking-wide text-slate-400" htmlFor="ticket-status-filter">
+            Status
+          </label>
+          <select
+            id="ticket-status-filter"
+            className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-200"
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as 'all' | 'open' | 'closed')}
+          >
+            <option value="all">All</option>
+            <option value="open">Open</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
       </div>
 
       {error ? (
@@ -109,6 +140,35 @@ export function AdminTicketsPage() {
               </div>
             </article>
           ))}
+          <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
+            <p>
+              Showing {tickets.length === 0 ? 0 : offset + 1}-{offset + tickets.length} of {total}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                className="rounded-lg border border-white/10 px-2.5 py-1.5 text-slate-300 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={loading || offset === 0}
+                type="button"
+                onClick={() => {
+                  const previousOffset = Math.max(0, offset - pageSize)
+                  void loadTickets(previousOffset)
+                }}
+              >
+                Previous
+              </button>
+              <button
+                className="rounded-lg border border-white/10 px-2.5 py-1.5 text-slate-300 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={loading || offset + tickets.length >= total}
+                type="button"
+                onClick={() => {
+                  const nextOffset = offset + pageSize
+                  void loadTickets(nextOffset)
+                }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

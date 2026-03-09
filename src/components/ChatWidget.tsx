@@ -17,7 +17,7 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const endRef = useRef<HTMLDivElement | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
-  const inputRef = useRef<HTMLInputElement | null>(null)
+  const inputRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -34,11 +34,24 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
     return () => document.removeEventListener('mousedown', handleOutsideClick)
   }, [isMenuOpen])
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const trySendMessage = () => {
     if (!draft.trim()) return
     sendMessage(draft)
     setDraft('')
+  }
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    trySendMessage()
+  }
+
+  const handleDraftKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
+      if (!isTyping) {
+        trySendMessage()
+      }
+    }
   }
 
   const widgetClassName =
@@ -275,21 +288,25 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
         {/* Input */}
         <form
           onSubmit={handleSubmit}
-          className="flex items-center gap-2 rounded-xl px-4 py-2"
+          className="flex items-end gap-2 rounded-xl px-4 py-2"
           style={{
             background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.08)',
           }}
         >
-          <label className="sr-only" htmlFor={`chat-input-${mode}`}>Type a message</label>
-          <input
+          <label className="sr-only" htmlFor={`chat-input-${mode}`}>
+            Type a message
+          </label>
+          <textarea
             ref={inputRef}
             id={`chat-input-${mode}`}
-            className="flex-1 bg-transparent text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none"
-            placeholder="Type a message…"
+            className="flex-1 resize-none bg-transparent text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none"
+            placeholder="Type a message..."
             disabled={isTyping}
+            rows={1}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={handleDraftKeyDown}
           />
           <button
             type="submit"

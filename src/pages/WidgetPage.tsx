@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, type KeyboardEvent, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { ApiError, getWidgetConfig, streamChat } from '../lib/api'
@@ -74,8 +74,7 @@ export function WidgetPage() {
     }
   }, [key])
 
-  const sendMessage = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const trySendMessage = async () => {
     if (!draft.trim() || sending || !key) {
       return
     }
@@ -130,6 +129,18 @@ export function WidgetPage() {
     }
   }
 
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    void trySendMessage()
+  }
+
+  const handleDraftKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
+      void trySendMessage()
+    }
+  }
+
   const closeWidget = () => {
     window.parent?.postMessage({ type: 'kufu_widget_close' }, '*')
   }
@@ -181,14 +192,16 @@ export function WidgetPage() {
         <div className="border-t border-red-500/30 bg-red-500/10 px-4 py-2 text-xs text-red-300">{error}</div>
       ) : null}
 
-      <form className="widget-input border-t border-white/10 p-3" onSubmit={sendMessage}>
+      <form className="widget-input border-t border-white/10 p-3" onSubmit={handleSubmit}>
         <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
-          <input
-            className="w-full bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
+          <textarea
+            className="w-full resize-none bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
             disabled={sending || !key}
             placeholder="Type a message..."
+            rows={1}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={handleDraftKeyDown}
           />
           <button
             className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"

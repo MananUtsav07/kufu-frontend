@@ -213,14 +213,50 @@ export type DashboardWhatsAppIntegration = {
   id: string
   chatbot_id: string
   phone_number_id: string
+  business_phone_number_id: string | null
   business_account_id: string | null
+  whatsapp_business_account_id: string | null
+  phone_number: string | null
   display_phone_number: string | null
   verify_token: string
+  status: 'pending' | 'connecting' | 'connected' | 'failed'
+  webhook_subscribed: boolean
   is_active: boolean
   last_inbound_at: string | null
   created_at: string
   updated_at: string
   has_access_token: boolean
+}
+
+export type WhatsAppOnboardingStartResponse = {
+  ok: true
+  onboarding: {
+    state: string
+    chatbotId: string
+    metaAppId: string | null
+    configId: string | null
+    redirectUri: string
+    graphApiVersion: string
+    webhookUrl: string
+    verifyToken: string
+  }
+  chatbots: Array<{
+    id: string
+    name: string
+  }>
+}
+
+export type WhatsAppOnboardingCompleteResponse = {
+  ok: true
+  connected: boolean
+  webhookUrl: string
+  integration: DashboardWhatsAppIntegration
+  subscribe: {
+    ok: boolean
+    message: string
+    status: number | null
+    payload: unknown
+  }
 }
 
 export type DashboardChatHistoryRow = {
@@ -680,6 +716,49 @@ export function deleteDashboardWhatsAppIntegration(): Promise<ApiOkResponse> {
   return requestJson('/api/dashboard/whatsapp', {
     method: 'DELETE',
   })
+}
+
+export function postWhatsAppOnboardingStart(payload: {
+  chatbotId?: string
+  state?: string
+}): Promise<WhatsAppOnboardingStartResponse> {
+  return requestJson('/api/whatsapp/onboarding/start', { body: payload })
+}
+
+export function postWhatsAppOnboardingComplete(payload: {
+  chatbotId?: string
+  businessAccountId?: string
+  phoneNumberId?: string
+  displayPhoneNumber?: string
+  phoneNumber?: string
+  accessToken?: string
+  code?: string
+  verifyToken?: string
+  state?: string
+  onboardingPayload?: unknown
+  authResponse?: {
+    accessToken?: string
+    code?: string
+  }
+  isActive?: boolean
+  autoSubscribe?: boolean
+}): Promise<WhatsAppOnboardingCompleteResponse> {
+  return requestJson('/api/whatsapp/onboarding/complete', { body: payload })
+}
+
+export function getWhatsAppOnboardingStatus(): Promise<{
+  ok: true
+  connected: boolean
+  webhookUrl: string
+  integration: DashboardWhatsAppIntegration | null
+}> {
+  return requestJson('/api/whatsapp/status')
+}
+
+export function postWhatsAppWebhookSubscribe(payload?: {
+  verifyToken?: string
+}): Promise<WhatsAppOnboardingCompleteResponse> {
+  return requestJson('/api/whatsapp/webhooks/subscribe', { body: payload ?? {} })
 }
 
 export function getDashboardChatHistory(

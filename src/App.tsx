@@ -13,6 +13,7 @@ import { DashboardCustomQuotePage } from "./dashboard/DashboardCustomQuotePage";
 import { DashboardDevTestPage } from "./dashboard/DashboardDevTestPage";
 import { DashboardChatHistoryPage } from "./dashboard/DashboardChatHistoryPage";
 import { DashboardIntegrationsPage } from "./dashboard/DashboardIntegrationsPage";
+import { DashboardWhatsAppConnectPage } from "./dashboard/DashboardWhatsAppConnectPage";
 import { DashboardKnowledgePage } from "./dashboard/DashboardKnowledgePage";
 import { DashboardLayout } from "./dashboard/DashboardLayout";
 import { DashboardLeadsPage } from "./dashboard/DashboardLeadsPage";
@@ -126,6 +127,10 @@ function App() {
             <Route
               path="integrations"
               element={<DashboardIntegrationsPage />}
+            />
+            <Route
+              path="integrations/whatsapp/connect"
+              element={<DashboardWhatsAppConnectPage />}
             />
             <Route path="knowledge" element={<DashboardKnowledgePage />} />
             <Route path="support" element={<DashboardSupportPage />} />

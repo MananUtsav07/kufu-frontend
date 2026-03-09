@@ -1,5 +1,5 @@
 import { type ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../lib/auth-context'
 import { markDashboardSetupProgress } from '../lib/dashboard-setup-progress'
@@ -32,6 +32,8 @@ const STARTER_PLUS_PLANS = new Set(['starter', 'pro', 'business'])
 const DEFAULT_SYNC_MAX_PAGES = 60
 
 export function DashboardIntegrationsPage() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const { user, plan, isAdmin } = useAuth()
   const currentPlanCode = typeof plan?.code === 'string' ? plan.code.toLowerCase() : 'free'
   const canUploadAssets = useMemo(() => {
@@ -102,6 +104,22 @@ export function DashboardIntegrationsPage() {
       toastResetTimerRef.current = null
     }, 2400)
   }, [])
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    if (searchParams.get('wa_connected') === '1') {
+      showToast('WhatsApp connected successfully via Meta onboarding.', 'success')
+      searchParams.delete('wa_connected')
+      const nextSearch = searchParams.toString()
+      navigate(
+        {
+          pathname: location.pathname,
+          search: nextSearch ? `?${nextSearch}` : '',
+        },
+        { replace: true },
+      )
+    }
+  }, [location.pathname, location.search, navigate, showToast])
 
   const loadChatbotLogos = async (items: DashboardChatbot[]) => {
     if (items.length === 0) {
@@ -274,13 +292,14 @@ export function DashboardIntegrationsPage() {
 
     setCreating(true)
     try {
-      await postDashboardChatbot({
+      const createResponse = await postDashboardChatbot({
         name: newName.trim(),
         website_url: newWebsiteUrl.trim() || null,
       })
       setNewName('')
       setNewWebsiteUrl('')
       await loadChatbots()
+      navigate(`/dashboard/integrations/whatsapp/connect?chatbotId=${encodeURIComponent(createResponse.chatbot.id)}`)
     } catch (createError) {
       setError(createError instanceof ApiError ? createError.message : 'Failed to create chatbot.')
     } finally {
@@ -562,6 +581,35 @@ export function DashboardIntegrationsPage() {
     }
   }
 
+  const whatsAppConnectionState = whatsAppIntegration?.status ?? 'not_connected'
+  const whatsAppStatus = (() => {
+    if (whatsAppConnectionState === 'connected') {
+      return {
+        label: 'Connected',
+        className: 'border-emerald-500/35 bg-emerald-500/10 text-emerald-200',
+      }
+    }
+
+    if (whatsAppConnectionState === 'connecting' || whatsAppConnectionState === 'pending') {
+      return {
+        label: 'Connecting',
+        className: 'border-sky-500/35 bg-sky-500/10 text-sky-200',
+      }
+    }
+
+    if (whatsAppConnectionState === 'failed') {
+      return {
+        label: 'Failed',
+        className: 'border-rose-500/35 bg-rose-500/10 text-rose-200',
+      }
+    }
+
+    return {
+      label: 'Not Connected',
+      className: 'border-slate-500/35 bg-slate-800/70 text-slate-300',
+    }
+  })()
+
   return (
     <div className="dashboard-integrations space-y-5">
       <div>
@@ -595,15 +643,17 @@ export function DashboardIntegrationsPage() {
               Connect Meta WhatsApp Cloud API to auto-reply using your chatbot knowledge base.
             </p>
           </div>
-          {whatsAppIntegration ? (
-            <span className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-200">
-              Connected
+          <div className="flex items-center gap-2">
+            <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${whatsAppStatus.className}`}>
+              {whatsAppStatus.label}
             </span>
-          ) : (
-            <span className="rounded-full border border-slate-500/35 bg-slate-800/70 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-300">
-              Not Connected
-            </span>
-          )}
+            <Link
+              className="rounded-lg border border-sky-500/35 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold text-sky-100 transition-colors hover:bg-sky-500/20"
+              to="/dashboard/integrations/whatsapp/connect"
+            >
+              {whatsAppIntegration ? 'Reconnect' : 'Connect'}
+            </Link>
+          </div>
         </div>
 
         {whatsAppLoading ? (
@@ -753,6 +803,13 @@ export function DashboardIntegrationsPage() {
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Verify Token</p>
                 <p className="mt-1 break-all text-xs text-slate-200">
                   {whatsAppIntegration?.verify_token || whatsAppForm.verifyToken || '-'}
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3 md:col-span-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Onboarding Status</p>
+                <p className="mt-1 text-xs text-slate-200">
+                  {whatsAppIntegration?.status || 'not_connected'} | webhook subscribed:{' '}
+                  {whatsAppIntegration?.webhook_subscribed ? 'yes' : 'no'}
                 </p>
               </div>
             </div>

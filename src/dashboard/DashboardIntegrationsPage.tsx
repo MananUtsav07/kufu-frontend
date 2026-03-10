@@ -26,6 +26,7 @@ import {
   type DashboardWhatsAppIntegration,
   type RagIngestionRun,
 } from '../lib/api'
+import { WebsiteTypeDetector } from './components/WebsiteTypeDetector'
 import './DashboardIntegrationsPage.css'
 
 const STARTER_PLUS_PLANS = new Set(['starter', 'pro', 'business'])
@@ -1064,6 +1065,12 @@ export function DashboardIntegrationsPage() {
                     {syncStatusLabel}
                   </span>
                 </div>
+
+                <WebsiteTypeDetector
+                  chatbotId={chatbot.id}
+                  chatbotName={chatbot.name}
+                  websiteUrl={chatbot.website_url}
+                />
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   {canUploadAssets ? (

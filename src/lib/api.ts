@@ -288,6 +288,31 @@ export type ChatbotSettings = {
   primary_color: string
 }
 
+export type WebsiteType =
+  | 'wordpress'
+  | 'shopify'
+  | 'react'
+  | 'nextjs'
+  | 'webflow'
+  | 'wix'
+  | 'squarespace'
+  | 'custom'
+  | 'unknown'
+
+export type DetectionConfidence = 'high' | 'medium' | 'low'
+
+export type SiteDetectionResult = {
+  websiteType: WebsiteType
+  confidence: DetectionConfidence
+  signals: string[]
+}
+
+export type InstallGuidePayload = {
+  title: string
+  steps: string[]
+  scriptExample: string
+}
+
 export type RagIngestionRunStatus = 'running' | 'done' | 'failed' | 'canceled'
 
 export type RagIngestionRun = {
@@ -707,6 +732,26 @@ export function deleteDashboardKbFile(fileId: string): Promise<ApiOkResponse> {
 
 export function getDashboardEmbed(chatbotId: string): Promise<{ ok: true; snippet: string; chatbot: Pick<DashboardChatbot, 'id' | 'name' | 'widget_public_key'> }> {
   return requestJson(`/api/dashboard/embed/${encodeURIComponent(chatbotId)}`)
+}
+
+export function postSiteDetectionDetect(payload: {
+  websiteUrl: string
+  chatbotId?: string
+}): Promise<{ ok: true } & SiteDetectionResult> {
+  return requestJson('/api/site-detection/detect', { body: payload })
+}
+
+export function getSiteDetectionInstallGuide(params: {
+  websiteType: WebsiteType
+  chatbotId?: string
+}): Promise<{ ok: true } & InstallGuidePayload> {
+  const query = new URLSearchParams()
+  query.set('websiteType', params.websiteType)
+  if (params.chatbotId) {
+    query.set('chatbotId', params.chatbotId)
+  }
+
+  return requestJson(`/api/site-detection/install-guide?${query.toString()}`)
 }
 
 export function getDashboardWhatsAppIntegration(): Promise<{

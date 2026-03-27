@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/asus/Desktop/kufu-backend -name *.ts ! -path */.git/* ! -path */dist/* ! -path */node_modules/*)"
+    ]
+  }
+}

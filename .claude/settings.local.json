@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find /c/Users/asus/Desktop/kufu-backend -name *.ts ! -path */.git/* ! -path */dist/* ! -path */node_modules/*)"
+      "Bash(find /c/Users/asus/Desktop/kufu-backend -name *.ts ! -path */.git/* ! -path */dist/* ! -path */node_modules/*)",
+      "Read(//c/Users/asus/Desktop/kufu-backend/**)",
+      "Bash(npx tsc:*)",
+      "Bash(npx --prefix /c/Users/asus/Desktop/kufu-backend tsc --noEmit -p /c/Users/asus/Desktop/kufu-backend/tsconfig.json)"
     ]
   }
 }

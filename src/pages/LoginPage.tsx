@@ -205,6 +205,16 @@ export function LoginPage() {
                 </div>
               </div>
 
+              {/* Forgot password */}
+              <div className="text-right -mt-1">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors duration-200"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
               {/* Error */}
               {error && (
                 <div

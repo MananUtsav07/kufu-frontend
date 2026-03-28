@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { BotIcon } from "./BotIcon";
+import logo from ".././../assets/gradlogo.svg";
 
 type HeroSectionProps = {
   onScrollTo: (id: string) => void;
@@ -227,15 +227,8 @@ export function HeroSection({ onScrollTo }: HeroSectionProps) {
 
               {/* Header */}
               <div className="flex items-center gap-3 mb-5 pb-5 border-b border-white/[0.06]">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #3b82f6, #6366f1, #8b5cf6)",
-                    boxShadow: "0 4px 12px rgba(99,102,241,0.4)",
-                  }}
-                >
-                  <BotIcon size={18} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <img src={logo} />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-white">Kufu Assistant</p>

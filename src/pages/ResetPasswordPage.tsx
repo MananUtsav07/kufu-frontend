@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
-import { BrandBotIcon } from '../components/BrandBotIcon'
+import logo from '../assets/gradlogo.svg'
 import { Navbar } from '../components/Navbar'
 import { postResetPassword } from '../lib/api'
 
@@ -138,7 +138,7 @@ export function ResetPasswordPage() {
                 boxShadow: '0 4px 24px rgba(99,102,241,0.35), 0 0 0 1px rgba(99,102,241,0.15)',
               }}
             >
-              <BrandBotIcon size={24} />
+              <img src={logo} alt="Kufu" />
             </div>
             <h1
               className="font-display font-black text-white mb-2"

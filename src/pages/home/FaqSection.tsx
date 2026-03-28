@@ -6,17 +6,17 @@ const faqs = [
   {
     question: "Do I need to know how to code?",
     answer:
-      "Not at all. You just paste one script tag into your website — if you can add a Google Analytics tag, you can add Kufu. Everything else is handled automatically.",
+      "Usually no. In most cases you only need to add one script snippet to your site, then manage content from the dashboard.",
   },
   {
     question: "How does Kufu train on my website?",
     answer:
-      "Kufu crawls your website pages automatically and extracts the content to train your chatbot. No manual uploads, no data entry — it all happens in the background.",
+      "Kufu can crawl selected website pages and use that content to train your chatbot, then you can refine responses from the dashboard.",
   },
   {
     question: "What if my website content changes?",
     answer:
-      "You can re-sync your website anytime from your dashboard with one click. Your chatbot will be retrained with the latest content immediately.",
+      "You can update your knowledge base and run a fresh website sync from your dashboard whenever content changes.",
   },
   {
     question: "Can I add custom information beyond my website?",
@@ -26,17 +26,17 @@ const faqs = [
   {
     question: "Which website platforms are supported?",
     answer:
-      "Any platform — React, Next.js, WordPress, Webflow, Wix, Shopify, or plain HTML. If it's a website, Kufu works on it.",
+      "Kufu works with most websites where you can add a script tag, including common stacks like React, WordPress, Webflow, Shopify, and plain HTML sites.",
   },
   {
     question: "Is my data secure?",
     answer:
-      "Yes. Your data is stored securely and your chatbot is locked to your domain only via allowed domain protection. No one else can use your widget key.",
+      "We take data security seriously and use authenticated access and dashboard controls to help keep your workspace protected.",
   },
   {
     question: "Can I customize the chatbot?",
     answer:
-      "Yes. You can update the chatbot name, greeting message, allowed domains, and knowledge base directly from your dashboard at any time.",
+      "Yes. You can update the chatbot name, greeting message, and knowledge base directly from your dashboard at any time.",
   },
 ];
 

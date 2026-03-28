@@ -127,16 +127,16 @@ export function ContactPage() {
           <div className="lg:sticky lg:top-24 space-y-10">
             {/* Badge */}
             <motion.div {...fadeUp(0)}>
-              <span
-                className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[10px] font-bold uppercase tracking-[.15em] text-blue-300"
-                style={{
-                  border: "1px solid rgba(59,130,246,.3)",
-                  background: "rgba(59,130,246,.08)",
-                }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                We reply within 24 hours
-              </span>
+                <span
+                  className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[10px] font-bold uppercase tracking-[.15em] text-blue-300"
+                  style={{
+                    border: "1px solid rgba(59,130,246,.3)",
+                    background: "rgba(59,130,246,.08)",
+                  }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                We usually reply in 1-2 business days
+                </span>
             </motion.div>
 
             {/* Headline */}
@@ -205,10 +205,10 @@ export function ContactPage() {
                     Email us directly
                   </p>
                   <a
-                    href="mailto:hello@kufu.ai"
+                    href="mailto:kufuchatbot@gmail.com"
                     className="text-white font-semibold text-sm hover:text-blue-300 transition-colors"
                   >
-                    kufuchatbot@gmail.com   
+                    kufuchatbot@gmail.com
                   </a>
                 </div>
               </div>
@@ -217,9 +217,9 @@ export function ContactPage() {
             {/* Response time */}
             <motion.div {...fadeUp(0.18)} className="space-y-3">
               {[
-                { label: "General inquiries", time: "Within 24 hours" },
-                { label: "Technical support", time: "Within 12 hours" },
-                { label: "Partnership requests", time: "Within 48 hours" },
+                { label: "General inquiries", time: "Usually 1-2 business days" },
+                { label: "Technical support", time: "As soon as possible" },
+                { label: "Partnership requests", time: "Based on request volume" },
               ].map((item) => (
                 <div
                   key={item.label}
@@ -288,19 +288,9 @@ export function ContactPage() {
                       Message sent!
                     </h3>
                     <p className="text-sm text-slate-400 max-w-xs leading-relaxed">
-                      Thanks for reaching out. We'll get back to you at your
-                      email address within 24 hours.
+                      Thanks for reaching out. We will get back to you at your
+                      email address as soon as possible.
                     </p>
-                  </div>
-                  <div
-                    className="flex items-center gap-2 rounded-full px-4 py-2 text-xs text-emerald-400 font-medium"
-                    style={{
-                      background: "rgba(16,185,129,0.08)",
-                      border: "1px solid rgba(16,185,129,0.2)",
-                    }}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    Check your email for confirmation
                   </div>
                 </div>
               ) : (

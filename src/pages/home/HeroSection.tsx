@@ -7,8 +7,8 @@ type HeroSectionProps = {
 
 const stats: [string, string][] = [
   ["24/7", "Always Online"],
-  ["< 2min", "Setup Time"],
-  ["Any Site", "Any Framework"],
+  ["Quick", "Guided Setup"],
+  ["Flexible", "Website Embed"],
 ];
 
 const chatMessages = [
@@ -43,7 +43,7 @@ export function HeroSection({ onScrollTo }: HeroSectionProps) {
           <div className="inline-flex items-center gap-2.5 border border-indigo-500/25 bg-indigo-500/[0.08] rounded-full px-4 py-2">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-400 pulse-dot" />
             <span className="text-[0.7rem] font-bold tracking-[0.18em] uppercase text-blue-300 font-mono">
-              No Coding Required · Auto-Trained AI
+              Simple Setup · Website-Trained AI
             </span>
           </div>
         </div>
@@ -124,14 +124,14 @@ export function HeroSection({ onScrollTo }: HeroSectionProps) {
             >
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
             </svg>
-            Get Started Free
+            Get Started
           </button>
           <button
             type="button"
             onClick={() => onScrollTo("pricing")}
             className="font-semibold text-sm px-8 py-3.5 rounded-full border border-white/10 text-slate-300 hover:border-indigo-500/40 hover:text-white hover:bg-white/[0.04] transition-all"
           >
-            See Pricings ↓
+            See Pricing ↓
           </button>
         </div>
 
@@ -175,7 +175,7 @@ export function HeroSection({ onScrollTo }: HeroSectionProps) {
                 {
                   icon: "⚡",
                   title: "One script tag setup",
-                  desc: "Paste one line of code. Your chatbot goes live instantly.",
+                  desc: "Paste one line of code to embed the chatbot on your site.",
                 },
               ].map((item) => (
                 <div key={item.title} className="flex items-start gap-4">

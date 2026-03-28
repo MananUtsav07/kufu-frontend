@@ -41,7 +41,7 @@ export function CtaSection() {
               <div className="inline-flex items-center gap-2 border border-indigo-500/25 bg-indigo-500/[0.08] rounded-full px-4 py-1.5 mb-6">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                 <span className="text-[0.68rem] font-bold tracking-[0.18em] uppercase text-blue-300 font-mono">
-                  Free to Start · No Credit Card
+                  Get Started Quickly
                 </span>
               </div>
 
@@ -101,7 +101,7 @@ export function CtaSection() {
                   >
                     <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                   </svg>
-                  Get Started Free
+                  Get Started
                 </button>
                 <button
                   type="button"
@@ -115,10 +115,10 @@ export function CtaSection() {
               {/* Trust row */}
               <div className="flex flex-wrap items-center justify-center gap-6 text-slate-500 text-[0.78rem]">
                 {[
-                  { icon: "✓", text: "Free plan available" },
-                  { icon: "✓", text: "Setup in under 5 minutes" },
-                  { icon: "✓", text: "Works on any website" },
-                  { icon: "✓", text: "Cancel anytime" },
+                  { icon: "✓", text: "Website-trained chatbot" },
+                  { icon: "✓", text: "Custom knowledge base" },
+                  { icon: "✓", text: "Dashboard controls" },
+                  { icon: "✓", text: "Guided onboarding" },
                 ].map((item) => (
                   <span key={item.text} className="flex items-center gap-1.5">
                     <span className="text-emerald-400 font-bold">

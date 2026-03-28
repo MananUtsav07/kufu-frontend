@@ -4,9 +4,72 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { Navbar } from '../components/Navbar'
 import { useAuth } from '../lib/auth-context'
 import { getReadableAuthError } from '../lib/authError'
+import { postResendVerification } from '../lib/api'
 import './VerifyEmailPage.css'
 
 type VerifyState = 'idle' | 'loading' | 'success' | 'error'
+type ResendState = 'idle' | 'loading' | 'success' | 'error'
+
+function ResendVerification() {
+  const [searchParams] = useSearchParams()
+  const queryEmail = searchParams.get('email')?.trim() ?? ''
+  const [email, setEmail] = useState(queryEmail)
+  const [resendState, setResendState] = useState<ResendState>('idle')
+  const [resendMessage, setResendMessage] = useState<string | null>(null)
+
+  const handleResend = async () => {
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail) {
+      setResendState('error')
+      setResendMessage('Please enter your email address.')
+      return
+    }
+    setResendState('loading')
+    setResendMessage(null)
+    try {
+      await postResendVerification(trimmedEmail)
+      setResendState('success')
+      setResendMessage('Verification email sent. Check your inbox.')
+    } catch (err) {
+      setResendState('error')
+      setResendMessage(getReadableAuthError(err, 'Failed to resend. Try again.'))
+    }
+  }
+
+  return (
+    <div className="mt-5 border-t border-white/[0.07] pt-5">
+      <p className="mb-2 text-center text-xs text-slate-500">Didn't receive an email?</p>
+      <div className="flex gap-2">
+        <input
+          className="verify-input min-w-0 flex-1 rounded-xl border border-white/[0.1] bg-white/[0.03] px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+          placeholder="your@email.com"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <button
+          className="verify-grad-bg shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70"
+          disabled={resendState === 'loading'}
+          type="button"
+          onClick={handleResend}
+        >
+          {resendState === 'loading' ? 'Sending…' : 'Resend'}
+        </button>
+      </div>
+      {resendMessage ? (
+        <div
+          className={`mt-2.5 rounded-xl border p-2.5 text-sm ${
+            resendState === 'success'
+              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+              : 'border-red-500/30 bg-red-500/10 text-red-300'
+          }`}
+        >
+          {resendMessage}
+        </div>
+      ) : null}
+    </div>
+  )
+}
 
 export function VerifyEmailPage() {
   const [searchParams] = useSearchParams()
@@ -100,6 +163,8 @@ export function VerifyEmailPage() {
               Back to Create Account
             </Link>
           </div>
+
+          <ResendVerification />
         </div>
       </div>
     </div>

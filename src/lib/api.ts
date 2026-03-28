@@ -1187,3 +1187,15 @@ export function verifyAccount(params: { token: string }): Promise<ApiOkResponse>
   return postVerifyEmail({ token: params.token })
 }
 
+export function postForgotPassword(email: string): Promise<ApiOkResponse> {
+  return requestJson('/api/auth/forgot-password', { body: { email }, auth: false })
+}
+
+export function postResetPassword(token: string, password: string): Promise<ApiOkResponse> {
+  return requestJson('/api/auth/reset-password', { body: { token, password }, auth: false })
+}
+
+export function postResendVerification(email: string): Promise<ApiOkResponse> {
+  return requestJson('/api/auth/resend-verification', { body: { email }, auth: false })
+}
+

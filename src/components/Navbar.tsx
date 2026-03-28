@@ -2,9 +2,9 @@
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import fullLogo from "../assets/fulllogo.svg";
 
 import { useAuth } from "../lib/auth-context";
-import { BrandBotIcon } from "./BrandBotIcon";
 import { brandName } from "../lib/brand";
 import { scrollToId } from "../lib/scrollToId";
 import { NavbarLinks } from "./NavbarLinks";
@@ -265,17 +265,13 @@ export function Navbar({ page: _page }: NavbarProps) {
           <Link
             to="/"
             aria-label={`${brandName} Home`}
-            className="flex items-center gap-2.5 justify-self-start group"
+            className="flex items-center justify-self-start group"
           >
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl grad-bg flex items-center justify-center flex-shrink-0 shadow-[0_2px_12px_rgba(99,102,241,0.35)] group-hover:scale-105 transition-transform">
-                <BrandBotIcon size={18} />
-              </div>
-
-              <span className="font-display font-extrabold text-[1.1rem] tracking-tight text-slate-100">
-                {brandName}
-              </span>
-            </div>
+            <img
+              src={fullLogo}
+              alt={`${brandName} logo`}
+              className="h-9 w-auto object-contain transition-transform"
+            />
           </Link>
 
           {/* Center: Nav Links — naturally centered by grid */}

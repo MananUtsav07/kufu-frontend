@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 
-import { BrandBotIcon } from './BrandBotIcon'
+import logo from '../assets/gradlogo.svg'
 import { useChat } from '../lib/chat-context'
 
 type ChatWidgetProps = {
@@ -91,7 +91,7 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
               boxShadow: '0 2px 10px rgba(99,102,241,0.4)',
             }}
           >
-            <BrandBotIcon size={15} />
+            <img src={logo} alt="Kufu" />
           </div>
           <div>
             <p className="text-sm font-bold text-white leading-none mb-1">Kufu Assistant</p>
@@ -171,7 +171,7 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
                     className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mb-0.5"
                     style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
                   >
-                    <BrandBotIcon size={12} />
+                    <img src={logo} alt="Kufu" />
                   </div>
                 )}
 
@@ -216,7 +216,7 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
         className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
         style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
       >
-        <BrandBotIcon size={12} />
+        <img src={logo} alt="Kufu" />
       </div>
       <div
         className="flex items-center gap-1.5 px-4 py-3 rounded-[18px_18px_18px_4px]"

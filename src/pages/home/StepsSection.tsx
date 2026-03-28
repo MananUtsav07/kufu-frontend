@@ -5,7 +5,7 @@ const steps = [
     id: "01",
     icon: "🔗",
     title: "Create Your Account",
-    description: "Sign up and enter your website URL. That's all we need to get started — no technical setup required.",
+    description: "Sign up and enter your website URL. That's enough to begin with minimal technical setup.",
     accent: "from-blue-500/20 to-blue-600/5",
     border: "rgba(59,130,246,0.2)",
     glow: "rgba(59,130,246,0.08)",
@@ -14,8 +14,8 @@ const steps = [
   {
     id: "02",
     icon: "🧠",
-    title: "We Train Your Chatbot",
-    description: "Kufu crawls your website and custom knowledge base automatically — building a smart AI tuned to your business.",
+    title: "Train Your Chatbot",
+    description: "Kufu uses your website content and custom knowledge base to build an assistant tuned to your business.",
     accent: "from-indigo-500/20 to-indigo-600/5",
     border: "rgba(99,102,241,0.2)",
     glow: "rgba(99,102,241,0.08)",
@@ -25,7 +25,7 @@ const steps = [
     id: "03",
     icon: "⚡",
     title: "Add One Script Tag",
-    description: "Copy your unique snippet and paste it into your website. Your AI chatbot goes live instantly — on any platform.",
+    description: "Copy your unique snippet and paste it into your website to launch your chatbot on your site.",
     accent: "from-violet-500/20 to-violet-600/5",
     border: "rgba(139,92,246,0.2)",
     glow: "rgba(139,92,246,0.08)",
@@ -159,9 +159,8 @@ export function StepsSection() {
         {/* Bottom CTA nudge */}
         <Reveal className="text-center mt-14">
           <p className="text-slate-500 text-sm">
-            Most businesses are live in{" "}
-            <span className="text-white font-semibold">under 5 minutes.</span>
-            {" "}No engineers required.
+            Most teams can launch quickly with{" "}
+            <span className="text-white font-semibold">guided setup.</span>
           </p>
         </Reveal>
       </div>

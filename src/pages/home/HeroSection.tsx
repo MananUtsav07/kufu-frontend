@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { BotIcon } from "./BotIcon";
+import logo from ".././../assets/gradlogo.svg";
 
 type HeroSectionProps = {
   onScrollTo: (id: string) => void;
@@ -7,8 +7,8 @@ type HeroSectionProps = {
 
 const stats: [string, string][] = [
   ["24/7", "Always Online"],
-  ["< 2min", "Setup Time"],
-  ["Any Site", "Any Framework"],
+  ["Quick", "Guided Setup"],
+  ["Flexible", "Website Embed"],
 ];
 
 const chatMessages = [
@@ -43,7 +43,7 @@ export function HeroSection({ onScrollTo }: HeroSectionProps) {
           <div className="inline-flex items-center gap-2.5 border border-indigo-500/25 bg-indigo-500/[0.08] rounded-full px-4 py-2">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-400 pulse-dot" />
             <span className="text-[0.7rem] font-bold tracking-[0.18em] uppercase text-blue-300 font-mono">
-              No Coding Required · Auto-Trained AI
+              Simple Setup · Website-Trained AI
             </span>
           </div>
         </div>
@@ -124,14 +124,14 @@ export function HeroSection({ onScrollTo }: HeroSectionProps) {
             >
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
             </svg>
-            Get Started Free
+            Get Started
           </button>
           <button
             type="button"
             onClick={() => onScrollTo("pricing")}
             className="font-semibold text-sm px-8 py-3.5 rounded-full border border-white/10 text-slate-300 hover:border-indigo-500/40 hover:text-white hover:bg-white/[0.04] transition-all"
           >
-            See Pricings ↓
+            See Pricing ↓
           </button>
         </div>
 
@@ -175,7 +175,7 @@ export function HeroSection({ onScrollTo }: HeroSectionProps) {
                 {
                   icon: "⚡",
                   title: "One script tag setup",
-                  desc: "Paste one line of code. Your chatbot goes live instantly.",
+                  desc: "Paste one line of code to embed the chatbot on your site.",
                 },
               ].map((item) => (
                 <div key={item.title} className="flex items-start gap-4">
@@ -227,15 +227,8 @@ export function HeroSection({ onScrollTo }: HeroSectionProps) {
 
               {/* Header */}
               <div className="flex items-center gap-3 mb-5 pb-5 border-b border-white/[0.06]">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #3b82f6, #6366f1, #8b5cf6)",
-                    boxShadow: "0 4px 12px rgba(99,102,241,0.4)",
-                  }}
-                >
-                  <BotIcon size={18} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <img src={logo} />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-white">Kufu Assistant</p>

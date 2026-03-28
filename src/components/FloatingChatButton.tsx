@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { BrandBotIcon } from "./BrandBotIcon";
+import logo from "../assets/gradlogo.svg";
 
 type FloatingChatButtonProps = {
   isOpen: boolean;
@@ -110,7 +110,7 @@ export function FloatingChatButton({
                     boxShadow: "0 4px 12px rgba(99,102,241,0.4)",
                   }}
                 >
-                  <BrandBotIcon size={16} />
+                  <img src={logo} alt="Kufu" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-white">Kufu Assistant</p>
@@ -242,9 +242,9 @@ export function FloatingChatButton({
               animate={{ opacity: 1, rotate: 0 }}
               exit={{ opacity: 0, rotate: -90 }}
               transition={{ duration: 0.18 }}
-              className="relative z-10"
+              className="relative z-10 flex items-center justify-center w-full h-full"
             >
-              <BrandBotIcon size={20} />
+              <img src={logo} alt="Kufu" className="w-full h-full object-contain" />
             </motion.span>
           )}
         </AnimatePresence>

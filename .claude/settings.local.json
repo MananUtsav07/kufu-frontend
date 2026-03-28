@@ -1,7 +1,34 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find /c/Users/asus/Desktop/kufu-backend -name *.ts ! -path */.git/* ! -path */dist/* ! -path */node_modules/*)"
+      "Bash(find /c/Users/asus/Desktop/kufu-backend -name *.ts ! -path */.git/* ! -path */dist/* ! -path */node_modules/*)",
+      "Read(//c/Users/asus/Desktop/kufu-backend/**)",
+      "Bash(npx tsc:*)",
+      "Bash(npx --prefix /c/Users/asus/Desktop/kufu-backend tsc --noEmit -p /c/Users/asus/Desktop/kufu-backend/tsconfig.json)",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/asus/Desktop/kufu-frontend/**)",
+      "Bash(done)",
+      "Bash(chmod 600 \"/c/Users/asus/Downloads/LightsailDefaultKey-ap-south-1.pem\")",
+      "Bash(ssh -i \"/c/Users/asus/Downloads/LightsailDefaultKey-ap-south-1.pem\" -o StrictHostKeyChecking=no ubuntu@65.2.108.154 \"echo connected && lsb_release -a\")",
+      "Bash(ssh -i \"/c/Users/asus/Downloads/LightsailDefaultKey-ap-south-1.pem\" ubuntu@65.2.108.154 \":*)",
+      "Bash(ssh -i:*)",
+      "Bash(npm run:*)",
+      "Bash(scp -i \"C:/Users/asus/Downloads/LightsailDefaultKey-ap-south-1.pem\" -r \"C:/Users/asus/Desktop/kufu-frontend/dist/.\" ubuntu@65.2.108.154:/var/www/kufu/)",
+      "Bash(rsync -avz --exclude='node_modules' --exclude='.git' --exclude='dist' -e \"ssh -i ''C:/Users/asus/Downloads/LightsailDefaultKey-ap-south-1.pem''\" \"C:/Users/asus/Desktop/kufu-backend/\" ubuntu@65.2.108.154:/opt/kufu-backend/)",
+      "Read(//c/Users/asus/Desktop/**)",
+      "Bash(tar --exclude='kufu-backend/node_modules' --exclude='kufu-backend/.git' --exclude='kufu-backend/dist' -czf /tmp/kufu-backend.tar.gz kufu-backend/)",
+      "Bash(scp -i \"C:/Users/asus/Downloads/LightsailDefaultKey-ap-south-1.pem\" /tmp/kufu-backend.tar.gz ubuntu@65.2.108.154:/tmp/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://65.2.108.154/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://65.2.108.154/api/health)",
+      "Bash(curl -s http://65.2.108.154/api/health)",
+      "Bash(scp -i \"C:/Users/asus/Downloads/LightsailDefaultKey-ap-south-1.pem\" \"C:/Users/asus/Desktop/kufu-backend/.env\" ubuntu@65.2.108.154:/opt/kufu-backend/.env)",
+      "Bash(curl -s http://65.2.108.154/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://kufuai.com/)",
+      "Bash(curl -s http://kufuai.com/api/health)",
+      "Bash(curl -Ls -o /dev/null -w \"%{http_code}\" https://kufuai.com/)",
+      "Bash(curl -s https://kufuai.com/api/health)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://kufuai.com/)"
     ]
   }
 }

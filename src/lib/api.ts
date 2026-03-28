@@ -382,7 +382,7 @@ export function getApiBaseUrl(): string {
     return 'http://localhost:8787'
   }
 
-  throw new Error('Missing VITE_API_BASE_URL in production build. Point it to your Render backend URL.')
+  return ''
 }
 
 function resolveApiUrl(path: string): string {

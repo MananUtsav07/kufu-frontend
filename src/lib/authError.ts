@@ -9,7 +9,7 @@ export function getReadableAuthError(error: unknown, fallbackMessage: string): s
   }
 
   if (message === 'Failed to fetch') {
-    return 'Network/CORS issue reaching backend auth API. Check API URL/proxy and CORS configuration.'
+    return 'Unable to reach the server. Please check your connection and try again.'
   }
 
   return message

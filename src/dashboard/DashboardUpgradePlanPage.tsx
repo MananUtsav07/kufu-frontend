@@ -11,6 +11,7 @@ const PLANS = [
 
 export function DashboardUpgradePlanPage() {
   const [submittingPlan, setSubmittingPlan] = useState<string | null>(null)
+  const [pendingPlans, setPendingPlans] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
@@ -25,6 +26,7 @@ export function DashboardUpgradePlanPage() {
         requested_unlimited_messages: planCode === 'business',
         notes: `Upgrade request for ${planCode.toUpperCase()} plan from dashboard.`,
       })
+      setPendingPlans((prev) => new Set([...prev, planCode]))
       setSuccess(`Upgrade request sent for ${planCode.toUpperCase()} plan. Our team will review it shortly.`)
     } catch (submitError) {
       setError(submitError instanceof ApiError ? submitError.message : 'Failed to submit upgrade request.')
@@ -58,12 +60,20 @@ export function DashboardUpgradePlanPage() {
             <h2 className="text-lg font-bold text-white">{plan.title}</h2>
             <p className="mt-2 text-sm text-slate-400">{plan.description}</p>
             <button
-              className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
-              disabled={submittingPlan === plan.code}
+              className={`mt-4 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-70 ${
+                pendingPlans.has(plan.code)
+                  ? 'bg-amber-600 hover:bg-amber-500'
+                  : 'bg-indigo-600 hover:bg-indigo-500'
+              }`}
+              disabled={submittingPlan === plan.code || pendingPlans.has(plan.code)}
               type="button"
               onClick={() => requestUpgrade(plan.code)}
             >
-              {submittingPlan === plan.code ? 'Submitting...' : `Request ${plan.title}`}
+              {submittingPlan === plan.code
+                ? 'Submitting...'
+                : pendingPlans.has(plan.code)
+                  ? 'Request Pending'
+                  : `Request ${plan.title}`}
             </button>
           </article>
         ))}

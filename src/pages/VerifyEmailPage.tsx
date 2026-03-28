@@ -10,7 +10,7 @@ import './VerifyEmailPage.css'
 type VerifyState = 'idle' | 'loading' | 'success' | 'error'
 type ResendState = 'idle' | 'loading' | 'success' | 'error'
 
-function ResendVerification() {
+function ResendVerification({ onResendSuccess }: { onResendSuccess?: () => void }) {
   const [searchParams] = useSearchParams()
   const queryEmail = searchParams.get('email')?.trim() ?? ''
   const [email, setEmail] = useState(queryEmail)
@@ -29,7 +29,8 @@ function ResendVerification() {
     try {
       await postResendVerification(trimmedEmail)
       setResendState('success')
-      setResendMessage('Verification email sent. Check your inbox.')
+      setResendMessage('New verification email sent — check your inbox and use the latest link.')
+      onResendSuccess?.()
     } catch (err) {
       setResendState('error')
       setResendMessage(getReadableAuthError(err, 'Failed to resend. Try again.'))
@@ -146,6 +147,9 @@ export function VerifyEmailPage() {
               }`}
             >
               {message}
+              {state === 'error' && (message === 'Invalid verification token' || message === 'Verification token expired') && (
+                <p className="mt-1 text-red-400/80">Use the resend section below to get a fresh link.</p>
+              )}
             </div>
           ) : null}
 
@@ -164,7 +168,7 @@ export function VerifyEmailPage() {
             </Link>
           </div>
 
-          <ResendVerification />
+          <ResendVerification onResendSuccess={() => { setToken(''); setState('idle'); setMessage(null) }} />
         </div>
       </div>
     </div>

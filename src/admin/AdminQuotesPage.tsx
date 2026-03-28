@@ -122,7 +122,7 @@ export function AdminQuotesPage() {
 
               <p className="mt-2 text-sm text-slate-300">{quote.notes}</p>
               <p className="mt-2 text-xs text-slate-500">
-                Requested plan: {quote.requested_plan || '-'} | Requested chatbots: {quote.requested_chatbots || '-'}
+                Requested plan: {quote.requested_plan || '-'} | Requested chatbots: {quote.requested_chatbots || '-'} | Unlimited messages: {quote.requested_unlimited_messages ? 'Yes' : 'No'}
               </p>
 
               <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">

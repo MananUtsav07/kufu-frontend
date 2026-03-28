@@ -64,6 +64,7 @@ export function DashboardIntegrationsPage() {
   const [ragActionBusy, setRagActionBusy] = useState<Record<string, boolean>>({})
   const [ragUrlsText, setRagUrlsText] = useState('')
   const [toast, setToast] = useState<{ message: string; tone: 'info' | 'success' | 'error' } | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const copyResetTimersRef = useRef<Record<string, number>>({})
   const toastResetTimerRef = useRef<number | null>(null)
   const isIntegrationLimitReached = !isAdmin && chatbots.length >= integrationLimit
@@ -581,18 +582,49 @@ export function DashboardIntegrationsPage() {
                     </div>
                     <div>
                       <h3 className="text-base font-semibold text-white">{chatbot.name}</h3>
-                      <p className="text-xs text-slate-400">{chatbot.website_url || 'No website URL configured'}</p>
+                      {chatbot.website_url ? (
+                        <a
+                          className="text-xs text-indigo-300 hover:text-indigo-200 hover:underline"
+                          href={chatbot.website_url}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          {chatbot.website_url}
+                        </a>
+                      ) : (
+                        <p className="text-xs text-slate-400">No website URL configured</p>
+                      )}
                       <p className="mt-1 text-xs text-slate-500">Public key: {chatbot.widget_public_key}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
-                      className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-300 transition-colors hover:bg-red-500/20"
-                      type="button"
-                      onClick={() => removeChatbot(chatbot.id)}
-                    >
-                      Delete
-                    </button>
+                    {deleteConfirmId === chatbot.id ? (
+                      <>
+                        <span className="text-xs text-slate-300">Are you sure?</span>
+                        <button
+                          className="rounded-lg border border-red-500/40 bg-red-500/20 px-3 py-1.5 text-xs font-semibold text-red-200 transition-colors hover:bg-red-500/30"
+                          type="button"
+                          onClick={() => { setDeleteConfirmId(null); void removeChatbot(chatbot.id) }}
+                        >
+                          Yes, Delete
+                        </button>
+                        <button
+                          className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 transition-colors hover:bg-white/5"
+                          type="button"
+                          onClick={() => setDeleteConfirmId(null)}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-300 transition-colors hover:bg-red-500/20"
+                        type="button"
+                        onClick={() => setDeleteConfirmId(chatbot.id)}
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -689,12 +721,16 @@ export function DashboardIntegrationsPage() {
                   )}
 
                   <button
-                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
-                    disabled={actionBusy}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-70 ${
+                      run?.status === 'done'
+                        ? 'bg-emerald-700 hover:bg-emerald-600'
+                        : 'bg-emerald-600 hover:bg-emerald-500'
+                    }`}
+                    disabled={actionBusy || run?.status === 'done'}
                     type="button"
                     onClick={() => triggerIngestion(chatbot, 'start')}
                   >
-                    {actionBusy ? 'Starting...' : 'Sync Website'}
+                    {actionBusy ? 'Starting...' : run?.status === 'done' ? 'Synced' : 'Sync Website'}
                   </button>
                   <button
                     className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-70"

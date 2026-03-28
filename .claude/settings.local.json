@@ -28,7 +28,19 @@
       "Bash(curl -s http://kufuai.com/api/health)",
       "Bash(curl -Ls -o /dev/null -w \"%{http_code}\" https://kufuai.com/)",
       "Bash(curl -s https://kufuai.com/api/health)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://kufuai.com/)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://kufuai.com/)",
+      "Bash(scp -i \"C:/Users/asus/Downloads/LightsailDefaultKey-ap-south-1.pem\" -r dist/. ubuntu@65.2.108.154:/var/www/kufu/)",
+      "Bash(tar -czf /tmp/kufu-backend-dist.tar.gz kufu-backend/dist/)",
+      "Bash(scp -i \"C:/Users/asus/Downloads/LightsailDefaultKey-ap-south-1.pem\" /tmp/kufu-backend-dist.tar.gz ubuntu@65.2.108.154:/tmp/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://kufuai.com/widget/kufu.js?key=test\")",
+      "Bash(curl -s \"https://kufuai.com/widget/kufu.js?key=test\")",
+      "Bash(curl -s -o /dev/null -w \"Content-Type: %{content_type}\\\\nHTTP: %{http_code}\\\\n\" \"https://kufuai.com/widget/kufu.js?key=test\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP:%{http_code} Content-Type:%{content_type}\\\\n\" \"https://kufuai.com/widget/kufu.js?key=7305e59705dcf18eaca8c702abbfe808c32466d5bd017c08\")",
+      "Bash(curl -sI \"https://kufuai.com/widget?key=test\")",
+      "Bash(curl -sI \"https://kufuai.com/\")",
+      "Bash(curl -sI \"https://kufuai.com/api/health\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP:%{http_code} Type:%{content_type}\\\\n\" \"https://kufuai.com/widget/kufu.js?key=7305e59705dcf18eaca8c702abbfe808c32466d5bd017c08\")",
+      "Bash(curl -s \"https://kufuai.com/api/widget/config?key=7305e59705dcf18eaca8c702abbfe808c32466d5bd017c08\")"
     ]
   }
 }

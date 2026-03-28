@@ -73,16 +73,6 @@ export function DashboardProfilePage() {
       return
     }
 
-    if (websiteUrl.trim()) {
-      try {
-        // Keep lightweight validation while preserving current API contract.
-        new URL(websiteUrl.trim())
-      } catch {
-        setError('Website URL must be a valid URL.')
-        return
-      }
-    }
-
     setSaving(true)
     try {
       const nextBusinessName = businessName.trim()

@@ -60,11 +60,6 @@ const DashboardIntegrationsPage = lazy(() =>
     default: module.DashboardIntegrationsPage,
   })),
 );
-const DashboardWhatsAppConnectPage = lazy(() =>
-  import("./dashboard/DashboardWhatsAppConnectPage").then((module) => ({
-    default: module.DashboardWhatsAppConnectPage,
-  })),
-);
 const DashboardKnowledgePage = lazy(() =>
   import("./dashboard/DashboardKnowledgePage").then((module) => ({
     default: module.DashboardKnowledgePage,
@@ -245,10 +240,6 @@ function App() {
               <Route
                 path="integrations"
                 element={<DashboardIntegrationsPage />}
-              />
-              <Route
-                path="integrations/whatsapp/connect"
-                element={<DashboardWhatsAppConnectPage />}
               />
               <Route path="knowledge" element={<DashboardKnowledgePage />} />
               <Route path="support" element={<DashboardSupportPage />} />

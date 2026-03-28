@@ -88,25 +88,27 @@ export function DashboardSupportPage() {
         <h2 className="text-sm font-semibold text-white">Create Ticket</h2>
         <div className="mt-3 space-y-3">
           <input
-            className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+            className="block w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
             placeholder="Ticket subject"
             type="text"
             value={subject}
             onChange={(event) => setSubject(event.target.value)}
           />
           <textarea
-            className="min-h-[120px] rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+            className="block min-h-[120px] w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
             placeholder="Describe your issue"
             value={message}
             onChange={(event) => setMessage(event.target.value)}
           />
-          <button
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
-            disabled={submitting}
-            type="submit"
-          >
-            {submitting ? 'Submitting...' : 'Submit Ticket'}
-          </button>
+          <div className="flex justify-start sm:justify-end">
+            <button
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={submitting}
+              type="submit"
+            >
+              {submitting ? 'Submitting...' : 'Submit Ticket'}
+            </button>
+          </div>
         </div>
       </form>
 

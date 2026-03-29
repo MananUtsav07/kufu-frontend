@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import logo from '../assets/gradlogo.svg'
 import { useChat } from '../lib/chat-context'
@@ -16,11 +16,17 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
   const [draft, setDraft] = useState('')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const endRef = useRef<HTMLDivElement | null>(null)
+  const messagesRef = useRef<HTMLDivElement | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
+  const shouldStickToBottomRef = useRef(true)
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' })
+  useLayoutEffect(() => {
+    if (!shouldStickToBottomRef.current) {
+      return
+    }
+
+    endRef.current?.scrollIntoView({ behavior: messages.length > 1 ? 'smooth' : 'auto', block: 'end' })
   }, [isTyping, messages])
 
   useEffect(() => {
@@ -58,6 +64,16 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
     mode === 'embedded'
       ? 'flex h-full w-full flex-col overflow-hidden rounded-2xl'
       : 'flex h-[560px] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl'
+
+  const handleMessagesScroll = () => {
+    const container = messagesRef.current
+    if (!container) {
+      return
+    }
+
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
+    shouldStickToBottomRef.current = distanceFromBottom <= 40
+  }
 
   return (
     <motion.section
@@ -153,7 +169,12 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ scrollbarWidth: 'none' }}>
+      <div
+        ref={messagesRef}
+        className="kufu-chat-scroll flex-1 overflow-y-auto p-4 space-y-4"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        onScroll={handleMessagesScroll}
+      >
         <AnimatePresence initial={false}>
           {messages.map((message) => {
             const isUser = message.role === 'user'
@@ -333,6 +354,10 @@ export function ChatWidget({ mode = 'embedded', className = '', panelId }: ChatW
       </div>
 
       <style>{`
+        .kufu-chat-scroll::-webkit-scrollbar {
+          display: none;
+        }
+
         @keyframes bounce {
           0%, 60%, 100% { transform: translateY(0); }
           30% { transform: translateY(-4px); }

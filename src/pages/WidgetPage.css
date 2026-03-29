@@ -6,3 +6,12 @@
   box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.14);
 }
 
+.widget-messages {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.widget-messages::-webkit-scrollbar {
+  display: none;
+}
+

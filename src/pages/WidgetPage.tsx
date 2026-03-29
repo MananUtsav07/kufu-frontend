@@ -1,4 +1,4 @@
-import { type FormEvent, type KeyboardEvent, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, type KeyboardEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { ApiError, getWidgetConfig, streamChat } from '../lib/api'
@@ -30,6 +30,9 @@ export function WidgetPage() {
   const [primaryColor, setPrimaryColor] = useState('#4f46e5')
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [messages, setMessages] = useState<WidgetMessage[]>([])
+  const messagesRef = useRef<HTMLElement | null>(null)
+  const endRef = useRef<HTMLDivElement | null>(null)
+  const shouldStickToBottomRef = useRef(true)
 
   const sessionId = useMemo(() => `widget-${Date.now()}`, [])
   const resolvedLogoUrl = logoUrl || brandChatLogoSrc
@@ -76,6 +79,14 @@ export function WidgetPage() {
       mounted = false
     }
   }, [key])
+
+  useLayoutEffect(() => {
+    if (!shouldStickToBottomRef.current) {
+      return
+    }
+
+    endRef.current?.scrollIntoView({ behavior: messages.length > 1 ? 'smooth' : 'auto', block: 'end' })
+  }, [messages, sending])
 
   const trySendMessage = async () => {
     if (!draft.trim() || sending || !key) {
@@ -148,6 +159,16 @@ export function WidgetPage() {
     window.parent?.postMessage({ type: 'kufu_widget_close' }, '*')
   }
 
+  const handleMessagesScroll = () => {
+    const container = messagesRef.current
+    if (!container) {
+      return
+    }
+
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
+    shouldStickToBottomRef.current = distanceFromBottom <= 40
+  }
+
   return (
     <div className="widget-page flex h-screen flex-col bg-slate-950 text-slate-100">
       <header className="widget-header flex items-center justify-between border-b border-white/10 px-4 py-3">
@@ -173,7 +194,11 @@ export function WidgetPage() {
         </button>
       </header>
 
-      <main className="widget-messages flex-1 space-y-3 overflow-y-auto p-4">
+      <main
+        ref={messagesRef}
+        className="widget-messages flex-1 space-y-3 overflow-y-auto p-4"
+        onScroll={handleMessagesScroll}
+      >
         {loading ? <p className="text-sm text-slate-400">Loading widget...</p> : null}
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -189,6 +214,7 @@ export function WidgetPage() {
             </div>
           </div>
         ))}
+        <div ref={endRef} />
       </main>
 
       {error ? (

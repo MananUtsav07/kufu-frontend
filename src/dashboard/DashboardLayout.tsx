@@ -50,7 +50,7 @@ const DASHBOARD_SECTIONS: DashboardSection[] = [
         requiredPlan: 'pro',
         lockHint: 'Upgrade to Pro to unlock Analytics',
       },
-      { to: '/dashboard/leads', label: 'Leads', icon: 'groups' },
+      // { to: '/dashboard/leads', label: 'Leads', icon: 'groups' },
     ],
   },
   {

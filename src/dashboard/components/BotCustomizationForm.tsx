@@ -39,7 +39,7 @@ export function BotCustomizationForm({
 
   const [botName, setBotName] = useState(initialBotName)
   const [greetingMessage, setGreetingMessage] = useState(initialGreetingMessage)
-  const [primaryColor, setPrimaryColor] = useState(initialPrimaryColor)
+  const [primaryColor] = useState(initialPrimaryColor)
   const [formError, setFormError] = useState<string | null>(null)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -91,24 +91,6 @@ export function BotCustomizationForm({
         />
         <p className="mt-1 text-[11px] text-slate-500">Leave blank to use the default greeting with your bot name.</p>
       </label>
-
-      <div className="grid gap-3 sm:grid-cols-[220px_1fr] sm:items-end">
-        <label className="block">
-          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">Primary Color</span>
-          <input
-            className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-2 py-1.5"
-            disabled={loading || saving || !initialSettings}
-            type="color"
-            value={primaryColor}
-            onChange={(event) => setPrimaryColor(event.target.value)}
-          />
-        </label>
-
-        <div className="rounded-xl border border-white/10 bg-slate-950/70 p-3">
-          <p className="mb-2 text-xs uppercase tracking-wide text-slate-400">Preview</p>
-          <p className="text-sm text-slate-200">Selected color: {primaryColor.toUpperCase()}</p>
-        </div>
-      </div>
 
       {formError ? (
         <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{formError}</div>

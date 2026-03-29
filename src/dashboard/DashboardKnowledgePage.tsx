@@ -14,27 +14,7 @@ import {
 } from '../lib/api'
 import './DashboardKnowledgePage.css'
 
-type FaqItem = {
-  question: string
-  answer: string
-}
-
 const STARTER_PLUS_PLANS = new Set(['starter', 'pro', 'business'])
-
-function parseFaqItems(input: unknown[]): FaqItem[] {
-  return input
-    .map((item) => {
-      if (!item || typeof item !== 'object') {
-        return null
-      }
-      const candidate = item as { question?: unknown; answer?: unknown }
-      return {
-        question: typeof candidate.question === 'string' ? candidate.question : '',
-        answer: typeof candidate.answer === 'string' ? candidate.answer : '',
-      }
-    })
-    .filter((item): item is FaqItem => item !== null)
-}
 
 function formatFileSize(fileSize: number): string {
   if (fileSize < 1024) {
@@ -69,7 +49,6 @@ export function DashboardKnowledgePage() {
   const [kbFiles, setKbFiles] = useState<DashboardKbFile[]>([])
 
   const [knowledgeBaseText, setKnowledgeBaseText] = useState('')
-  const [faqs, setFaqs] = useState<FaqItem[]>([])
 
   const loadKnowledgeAndChatbots = async () => {
     setLoading(true)
@@ -82,7 +61,6 @@ export function DashboardKnowledgePage() {
       ])
 
       setKnowledgeBaseText(knowledgeResponse.knowledge.knowledge_base_text ?? '')
-      setFaqs(parseFaqItems(knowledgeResponse.knowledge.faqs_json ?? []))
 
       setChatbots(chatbotResponse.chatbots)
       if (chatbotResponse.chatbots.length > 0) {
@@ -124,20 +102,6 @@ export function DashboardKnowledgePage() {
     void loadKbFiles(selectedChatbotId)
   }, [selectedChatbotId])
 
-  const handleFaqChange = (index: number, field: keyof FaqItem, value: string) => {
-    setFaqs((current) =>
-      current.map((faq, faqIndex) => (faqIndex === index ? { ...faq, [field]: value } : faq)),
-    )
-  }
-
-  const addFaq = () => {
-    setFaqs((current) => [...current, { question: '', answer: '' }])
-  }
-
-  const removeFaq = (index: number) => {
-    setFaqs((current) => current.filter((_, faqIndex) => faqIndex !== index))
-  }
-
   const handleSave = async () => {
     setSaving(true)
     setError(null)
@@ -150,12 +114,7 @@ export function DashboardKnowledgePage() {
         hours_text: null,
         contact_text: null,
         knowledge_base_text: knowledgeBaseText.trim() || null,
-        faqs_json: faqs
-          .map((faq) => ({
-            question: faq.question.trim(),
-            answer: faq.answer.trim(),
-          }))
-          .filter((faq) => faq.question || faq.answer),
+        faqs_json: [],
       })
       setSuccess('Knowledge saved successfully.')
     } catch (saveError) {
@@ -299,62 +258,6 @@ export function DashboardKnowledgePage() {
                 >
                   {removingKbFileId === file.id ? 'Removing...' : 'Delete'}
                 </button>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
-
-      <section className="knowledge-card rounded-2xl border border-white/10 bg-slate-900/70 p-4 sm:p-5">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-white">FAQs</h2>
-          <button
-            className="rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold text-indigo-300 transition-colors hover:bg-indigo-500/20"
-            type="button"
-            onClick={addFaq}
-          >
-            Add FAQ
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          {faqs.length === 0 ? (
-            <p className="text-sm text-slate-400">No FAQ items yet.</p>
-          ) : (
-            faqs.map((faq, index) => (
-              <div key={`faq-${index}`} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                <label className="block">
-                  <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Question
-                  </span>
-                  <input
-                    className="knowledge-input w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                    placeholder="What channels do you support?"
-                    type="text"
-                    value={faq.question}
-                    onChange={(event) => handleFaqChange(index, 'question', event.target.value)}
-                  />
-                </label>
-                <label className="mt-2 block">
-                  <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Answer
-                  </span>
-                  <textarea
-                    className="knowledge-input min-h-[80px] w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                    placeholder="We support website chat, WhatsApp, and Instagram."
-                    value={faq.answer}
-                    onChange={(event) => handleFaqChange(index, 'answer', event.target.value)}
-                  />
-                </label>
-                <div className="mt-2 text-right">
-                  <button
-                    className="rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-red-300 transition-colors hover:bg-red-500/20"
-                    type="button"
-                    onClick={() => removeFaq(index)}
-                  >
-                    Remove
-                  </button>
-                </div>
               </div>
             ))
           )}

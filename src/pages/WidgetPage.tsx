@@ -57,6 +57,9 @@ export function WidgetPage() {
         setPrimaryColor(response.config.primary_color?.trim() || '#4f46e5')
         setLogoUrl(response.config.logo_url ?? null)
         setMessages([{ id: createId(), role: 'assistant', content: response.config.greeting }])
+        if (response.config.logo_url) {
+          window.parent?.postMessage({ type: 'kufu_widget_logo', logoUrl: response.config.logo_url }, '*')
+        }
       } catch (loadError) {
         if (!mounted) {
           return

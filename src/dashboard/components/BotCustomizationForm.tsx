@@ -53,11 +53,6 @@ export function BotCustomizationForm({
       return
     }
 
-    if (!normalizedGreeting) {
-      setFormError('Greeting message is required.')
-      return
-    }
-
     if (!HEX_COLOR_PATTERN.test(normalizedColor)) {
       setFormError('Primary color must be a valid hex value like #4f46e5.')
       return
@@ -90,10 +85,11 @@ export function BotCustomizationForm({
         <textarea
           className="min-h-[110px] w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
           disabled={loading || saving || !initialSettings}
-          placeholder="Hi there. How can I help your business today?"
+          placeholder="Leave empty to auto-generate: Hi, welcome to [Bot Name]. How can we help you today?"
           value={greetingMessage}
           onChange={(event) => setGreetingMessage(event.target.value)}
         />
+        <p className="mt-1 text-[11px] text-slate-500">Leave blank to use the default greeting with your bot name.</p>
       </label>
 
       <div className="grid gap-3 sm:grid-cols-[220px_1fr] sm:items-end">

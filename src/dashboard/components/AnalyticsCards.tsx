@@ -7,6 +7,21 @@ type AnalyticsCardsProps = {
   loading?: boolean
 }
 
+function formatPeakHourInIst(hourUtc: number): string {
+  const baseUtc = Date.UTC(2024, 0, 1, hourUtc, 0, 0)
+  const start = new Date(baseUtc)
+  const end = new Date(baseUtc + 60 * 60 * 1000)
+
+  const formatter = new Intl.DateTimeFormat('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Kolkata',
+  })
+
+  return `${formatter.format(start)}-${formatter.format(end)} IST`
+}
+
 export function AnalyticsCards({ analytics, loading = false }: AnalyticsCardsProps) {
   const totalChats = analytics?.totalChats ?? 0
   const popularQuestions = analytics?.popularQuestions ?? []
@@ -21,7 +36,7 @@ export function AnalyticsCards({ analytics, loading = false }: AnalyticsCardsPro
           <p className="mt-1 text-xs text-slate-500">Distinct visitor sessions</p>
         </div>
         <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 sm:col-span-2">
-          <p className="text-xs uppercase tracking-wide text-slate-400">Peak Usage Hours (UTC)</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">Peak Usage Hours (IST)</p>
           {loading ? (
             <p className="mt-2 text-sm text-slate-400">Loading analytics...</p>
           ) : peakHours.length === 0 ? (
@@ -33,7 +48,7 @@ export function AnalyticsCards({ analytics, loading = false }: AnalyticsCardsPro
                   key={`hour-${item.hour}`}
                   className="inline-flex rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-2.5 py-1 text-xs font-semibold text-indigo-200"
                 >
-                  {item.hour.toString().padStart(2, '0')}:00 - {item.count}
+                  {formatPeakHourInIst(item.hour)} - {item.count}
                 </span>
               ))}
             </div>

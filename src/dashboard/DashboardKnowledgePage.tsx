@@ -68,10 +68,6 @@ export function DashboardKnowledgePage() {
   const [selectedChatbotId, setSelectedChatbotId] = useState<string>('')
   const [kbFiles, setKbFiles] = useState<DashboardKbFile[]>([])
 
-  const [servicesText, setServicesText] = useState('')
-  const [pricingText, setPricingText] = useState('')
-  const [hoursText, setHoursText] = useState('')
-  const [contactText, setContactText] = useState('')
   const [knowledgeBaseText, setKnowledgeBaseText] = useState('')
   const [faqs, setFaqs] = useState<FaqItem[]>([])
 
@@ -85,10 +81,6 @@ export function DashboardKnowledgePage() {
         getDashboardChatbots(),
       ])
 
-      setServicesText(knowledgeResponse.knowledge.services_text ?? '')
-      setPricingText(knowledgeResponse.knowledge.pricing_text ?? '')
-      setHoursText(knowledgeResponse.knowledge.hours_text ?? '')
-      setContactText(knowledgeResponse.knowledge.contact_text ?? '')
       setKnowledgeBaseText(knowledgeResponse.knowledge.knowledge_base_text ?? '')
       setFaqs(parseFaqItems(knowledgeResponse.knowledge.faqs_json ?? []))
 
@@ -153,10 +145,10 @@ export function DashboardKnowledgePage() {
 
     try {
       await postDashboardKnowledge({
-        services_text: servicesText.trim() || null,
-        pricing_text: pricingText.trim() || null,
-        hours_text: hoursText.trim() || null,
-        contact_text: contactText.trim() || null,
+        services_text: null,
+        pricing_text: null,
+        hours_text: null,
+        contact_text: null,
         knowledge_base_text: knowledgeBaseText.trim() || null,
         faqs_json: faqs
           .map((faq) => ({
@@ -244,51 +236,6 @@ export function DashboardKnowledgePage() {
               onChange={(event) => setKnowledgeBaseText(event.target.value)}
             />
           </label>
-
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-semibold text-slate-200">Services Text</span>
-            <textarea
-              className="knowledge-input min-h-[120px] w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-              disabled={loading}
-              placeholder="Describe your services and use cases."
-              value={servicesText}
-              onChange={(event) => setServicesText(event.target.value)}
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-semibold text-slate-200">Pricing Text</span>
-            <textarea
-              className="knowledge-input min-h-[100px] w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-              disabled={loading}
-              placeholder="Add pricing summary for assistant replies."
-              value={pricingText}
-              onChange={(event) => setPricingText(event.target.value)}
-            />
-          </label>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-slate-200">Business Hours</span>
-              <textarea
-                className="knowledge-input min-h-[100px] w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                disabled={loading}
-                placeholder="Mon-Sat, 9 AM - 7 PM IST"
-                value={hoursText}
-                onChange={(event) => setHoursText(event.target.value)}
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-slate-200">Contact Text</span>
-              <textarea
-                className="knowledge-input min-h-[100px] w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                disabled={loading}
-                placeholder="Email, WhatsApp, call details..."
-                value={contactText}
-                onChange={(event) => setContactText(event.target.value)}
-              />
-            </label>
-          </div>
         </div>
       </section>
 

@@ -294,10 +294,23 @@ export function DashboardIntegrationsPage() {
     }
   }
 
+  const ALLOWED_LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'])
+  const MAX_LOGO_SIZE_BYTES = 2 * 1024 * 1024 // 2 MB
+
   const handleLogoUploadChange = async (chatbotId: string, event: ChangeEvent<HTMLInputElement>) => {
     const targetFile = event.target.files?.[0]
     event.target.value = ''
     if (!targetFile) {
+      return
+    }
+
+    if (!ALLOWED_LOGO_TYPES.has(targetFile.type)) {
+      setError('Unsupported file type. Please upload a PNG, JPG, WEBP, or SVG.')
+      return
+    }
+
+    if (targetFile.size > MAX_LOGO_SIZE_BYTES) {
+      setError('Logo file is too large. Maximum size is 2 MB. Try compressing the image or use an SVG.')
       return
     }
 
@@ -307,7 +320,11 @@ export function DashboardIntegrationsPage() {
       const response = await postDashboardChatbotLogo(chatbotId, targetFile)
       setLogoUrlByChatbot((current) => ({ ...current, [chatbotId]: response.logoUrl }))
     } catch (uploadError) {
-      setError(uploadError instanceof ApiError ? uploadError.message : 'Failed to upload chatbot logo.')
+      if (uploadError instanceof ApiError && uploadError.status === 413) {
+        setError('Logo file is too large for the server. Please use an image under 2 MB or use an SVG.')
+      } else {
+        setError(uploadError instanceof ApiError ? uploadError.message : 'Failed to upload chatbot logo.')
+      }
     } finally {
       setLogoBusyByChatbot((current) => ({ ...current, [chatbotId]: false }))
     }

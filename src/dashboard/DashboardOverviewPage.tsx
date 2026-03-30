@@ -273,7 +273,9 @@ export function DashboardOverviewPage() {
         <div className="overview-card rounded-2xl border border-white/10 bg-slate-900/70 p-4">
           <p className="text-xs uppercase tracking-wide text-slate-400">Integrations Used</p>
           <p className="mt-2 text-2xl font-black text-white">
-            {loading ? '-' : `${summary.integrations_used}/${summary.integration_limit}`}
+            {/* {loading ? '-' : `${summary.integrations_used}/${summary.integration_limit}`} */}
+            {loading ? '-' : `${summary.integrations_used}/10000000`}
+
           </p>
         </div>
         <div className="overview-card rounded-2xl border border-white/10 bg-slate-900/70 p-4">
